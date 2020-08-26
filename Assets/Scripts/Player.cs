@@ -18,6 +18,7 @@ public class Player : MonoBehaviour
     private Rigidbody2D rb = null;
     private bool isGround = false;
     private bool isHead = false;
+    private bool isRun = false;
     private bool isJump = false;
     private float jumpPos = 0.0f;
     private float dashTime,jumpTime;
@@ -37,37 +38,39 @@ public class Player : MonoBehaviour
         isGround = ground.IsGround();
         isHead = head.IsGround();
 
-        float horizontalKey = Input.GetAxis("Horizontal");
-        float verticalKey = Input.GetAxis("Vertical"); 
-
-        float xSpeed = 0.0f;
+        float xSpeed = GetXSpeed();
         float ySpeed = GetYSpeed();
 
-        // 左右移動の設定
-        if(horizontalKey > 0)
+        SetAnimation();
+
+        rb.velocity = new Vector2(xSpeed, ySpeed);
+    }
+    private float GetXSpeed()
+    {
+        float horizontalKey = Input.GetAxis("Horizontal");
+        float xSpeed = 0.0f;
+        if (horizontalKey > 0)
         {
             transform.localScale = new Vector3(1, 1, 1);
-            anim.SetBool("run", true);
+            isRun = true;
             dashTime += Time.deltaTime;
             xSpeed = speed;
         }
-        else if (horizontalKey < 0) 
+        else if (horizontalKey < 0)
         {
             transform.localScale = new Vector3(-1, 1, 1);
-            anim.SetBool("run", true);
+            isRun = true;
             dashTime += Time.deltaTime;
             xSpeed = -speed;
         }
         else
         {
-            anim.SetBool("run", false);
+            isRun = false;
             xSpeed = 0.0f;
             dashTime = 0.0f;
         }
 
-
-        // 走る方向が逆になっているかどうかの判定
-        // 方向が反転している場合はdashTimeをリセットする
+        //前回の入力からダッシュの反転を判断して速度を変える
         if (horizontalKey > 0 && beforeKey < 0)
         {
             dashTime = 0.0f;
@@ -76,19 +79,12 @@ public class Player : MonoBehaviour
         {
             dashTime = 0.0f;
         }
+
         beforeKey = horizontalKey;
-
-        // xSpeedとySpeedの値をAnimationCurveと各継続時間から取得
         xSpeed *= dashCurve.Evaluate(dashTime);
-        if (isJump)
-        {
-            ySpeed *= jumpCurve.Evaluate(jumpTime);
-        }
-        
-        rb.velocity = new Vector2(xSpeed, ySpeed);
+        beforeKey = horizontalKey;
+        return xSpeed;
     }
-
-
     private float GetYSpeed()
     {
         float verticalKey = Input.GetAxis("Vertical");
@@ -134,6 +130,12 @@ public class Player : MonoBehaviour
             ySpeed *= jumpCurve.Evaluate(jumpTime);
         }
         return ySpeed;
+    }
+    private void SetAnimation()
+    {
+        anim.SetBool("jump", isJump);
+        anim.SetBool("ground", isGround);
+        anim.SetBool("run", isRun);
     }
 
 }
