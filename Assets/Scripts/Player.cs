@@ -22,7 +22,7 @@ public class Player : MonoBehaviour
     private float jumpPos = 0.0f;
     private float dashTime,jumpTime;
     private float beforeKey;  //New
-    
+
 
     // Start is called before the first frame update
     void Start()
@@ -41,7 +41,7 @@ public class Player : MonoBehaviour
         float verticalKey = Input.GetAxis("Vertical"); 
 
         float xSpeed = 0.0f;
-        float ySpeed = -gravity;
+        float ySpeed = GetYSpeed();
 
         // 左右移動の設定
         if(horizontalKey > 0)
@@ -65,41 +65,6 @@ public class Player : MonoBehaviour
             dashTime = 0.0f;
         }
 
-        // ジャンプの設定
-        if(isGround)
-        {
-        if (verticalKey > 0)
-            {
-                ySpeed = jumpSpeed;
-                jumpPos = transform.position.y;
-                isJump = true;
-                jumpTime = 0.0f;
-            }
-            else
-            {
-                isJump = false;
-            } 
-        }
-        else if(isJump)
-        {
-            //上方向キーを押しているか
-            bool pushUpKey = verticalKey > 0;
-            //現在の高さが飛べる高さより下か
-            bool canHeight = jumpPos + jumpHeight > transform.position.y;
-            //ジャンプ時間が長くなりすぎてないか
-            bool canTime = jumpLimitTime > jumpTime;
-
-            if (pushUpKey && canHeight && canTime && !isHead)
-            {
-                ySpeed = jumpSpeed;
-                jumpTime += Time.deltaTime;
-            }
-            else
-            {
-                isJump = false;
-                jumpTime = 0.0f; 
-            }
-        }
 
         // 走る方向が逆になっているかどうかの判定
         // 方向が反転している場合はdashTimeをリセットする
@@ -122,4 +87,53 @@ public class Player : MonoBehaviour
         
         rb.velocity = new Vector2(xSpeed, ySpeed);
     }
+
+
+    private float GetYSpeed()
+    {
+        float verticalKey = Input.GetAxis("Vertical");
+        float ySpeed = -gravity;
+
+        if (isGround)
+        {
+            if (verticalKey > 0)
+            {
+                ySpeed = jumpSpeed;
+                jumpPos = transform.position.y; //ジャンプした位置を記録する
+                isJump = true;
+                jumpTime = 0.0f;
+            }
+            else
+            {
+                isJump = false;
+            }
+        }
+        else if (isJump)
+        {
+            //上方向キーを押しているか
+            bool pushUpKey = verticalKey > 0;
+            //現在の高さが飛べる高さより下か
+            bool canHeight = jumpPos + jumpHeight > transform.position.y;
+            //ジャンプ時間が長くなりすぎてないか
+            bool canTime = jumpLimitTime > jumpTime;
+
+            if (pushUpKey && canHeight && canTime && !isHead)
+            {
+                ySpeed = jumpSpeed;
+                jumpTime += Time.deltaTime;
+            }
+            else
+            {
+                isJump = false;
+                jumpTime = 0.0f;
+            }
+        }
+
+        if (isJump)
+        {
+            ySpeed *= jumpCurve.Evaluate(jumpTime);
+        }
+        return ySpeed;
+    }
+
 }
