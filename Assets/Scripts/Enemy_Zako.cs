@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class Enemy_Zako : MonoBehaviour
 {
+    [Header("画面外でも行動する")] public bool nonVisibleAct; 
     private SpriteRenderer sr = null; 
 
     // Start is called before the first frame update
@@ -15,7 +16,7 @@ public class Enemy_Zako : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (sr.isVisible)
+        if (sr.isVisible || nonVisibleAct)
         {
             Debug.Log("画面に見えている");
         } 
