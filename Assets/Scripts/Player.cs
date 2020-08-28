@@ -35,6 +35,7 @@ public class Player : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        Debug.Log("0");
         anim = GetComponent<Animator>();
         rb = GetComponent<Rigidbody2D>();
         capcol = GetComponent<CapsuleCollider2D>();
@@ -45,6 +46,7 @@ public class Player : MonoBehaviour
     {
         if (!isDown)
         {
+            Debug.Log("1");
             //接地判定を得る
             isGround = ground.IsGround();
             isHead = head.IsGround(); 
@@ -57,6 +59,8 @@ public class Player : MonoBehaviour
             SetAnimation();
 
             //移動速度を設定
+            Debug.Log(xSpeed.ToString("0.00"));
+            Debug.Log(ySpeed.ToString("0.00"));
             rb.velocity = new Vector2(xSpeed, ySpeed);
         }
         else
@@ -71,6 +75,7 @@ public class Player : MonoBehaviour
         float xSpeed = 0.0f;
         if (horizontalKey > 0)
         {
+            Debug.Log("2");
             transform.localScale = new Vector3(1, 1, 1);
             isRun = true;
             dashTime += Time.deltaTime;
@@ -78,6 +83,7 @@ public class Player : MonoBehaviour
         }
         else if (horizontalKey < 0)
         {
+            Debug.Log("3");
             transform.localScale = new Vector3(-1, 1, 1);
             isRun = true;
             dashTime += Time.deltaTime;
@@ -115,6 +121,7 @@ public class Player : MonoBehaviour
         {
             if (verticalKey > 0)
             {
+                Debug.Log("4");
                 ySpeed = jumpSpeed;
                 jumpPos = transform.position.y; //ジャンプした位置を記録する
                 isJump = true;
@@ -127,6 +134,7 @@ public class Player : MonoBehaviour
         }
         else if (isJump)
         {
+            Debug.Log("5");
             //上方向キーを押しているか
             bool pushUpKey = verticalKey > 0;
             //現在の高さが飛べる高さより下か
@@ -145,10 +153,10 @@ public class Player : MonoBehaviour
                 jumpTime = 0.0f;
             }
         }
-
         //何かを踏んだときのジャンプ
         else if (isOtherJump)
         {
+            Debug.Log("6");
             //現在の高さが飛べる高さより下か
             bool canHeight = jumpPos + otherJumpHeight > transform.position.y;
             //ジャンプ時間が長くなりすぎてないか
@@ -156,11 +164,13 @@ public class Player : MonoBehaviour
 
             if (canHeight && canTime && !isHead)
             {
+                Debug.Log("7");
                 ySpeed = jumpSpeed;
                 jumpTime += Time.deltaTime;
             }
             else
             {
+                Debug.Log("8");
                 isOtherJump = false;
                 jumpTime = 0.0f;
             }
@@ -168,6 +178,7 @@ public class Player : MonoBehaviour
 
         if (isJump || isOtherJump)
         {
+            Debug.Log("9");
             ySpeed *= jumpCurve.Evaluate(jumpTime);
         }
         return ySpeed;
@@ -182,6 +193,7 @@ public class Player : MonoBehaviour
     {
         if (collision.collider.tag == enemyTag)
         {
+            Debug.Log("10");
             //踏みつけ判定になる高さ
             float stepOnHeight = (capcol.size.y * (stepOnRate / 100f));
 
@@ -195,6 +207,7 @@ public class Player : MonoBehaviour
                     ObjectCollision o = collision.gameObject.GetComponent<ObjectCollision>();
                     if (o != null)
                     {
+                        Debug.Log("11");
                         otherJumpHeight = o.boundHeight;    //踏んづけたものから跳ねる高さを取得する
                         o.playerStepOn = true;        //踏んづけたものに対して踏んづけた事を通知する
                         jumpPos = transform.position.y; //ジャンプした位置を記録する 
