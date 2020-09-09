@@ -4,20 +4,30 @@ using UnityEngine;
 
 public class Player : MonoBehaviour
 {
-    [Header("移動速度")] public float speed;
-    [Header("重力")] public float gravity;
-    [Header("ジャンプ速度")] public float jumpSpeed;
-    [Header("ジャンプする高さ")] public float jumpHeight;
-    [Header("ジャンプする長さ")] public float jumpLimitTime;
+    [Header("移動速度")] public float speed = 4;
+    [Header("重力")] public float gravity = 2;
+    [Header("ジャンプ速度")] public float jumpSpeed = 5;
+    [Header("ジャンプする高さ")] public float jumpHeight = 3;
+    [Header("ジャンプする長さ")] public float jumpLimitTime = 5;
     [Header("接地判定")] public GroundCheck ground;
     [Header("天井判定")] public GroundCheck head;
-    [Header("ダッシュの速さ表現")] public AnimationCurve dashCurve;
-    [Header("ジャンプの速さ表現")] public AnimationCurve jumpCurve;
-    [Header("踏みつけ判定の高さの割合(%)")] public float stepOnRate;
 
-    private Animator anim = null;
+    //  TODO:もっと綺麗な形に変更
+
+    static Keyframe dStartKeyframe = new Keyframe(0.0f, 0.0f);
+    static Keyframe dEndKeyframe = new Keyframe(0.5f, 1.0f);
+    static Keyframe jStartKeyframe = new Keyframe(0.0f, 1.0f);
+    static Keyframe jEndKeyframe = new Keyframe(1.3f, 0.5f);
+    [Header("ダッシュの速さ表現")] public AnimationCurve dashCurve = new AnimationCurve(dStartKeyframe, dEndKeyframe);
+    [Header("ジャンプの速さ表現")] public AnimationCurve jumpCurve = new AnimationCurve(jStartKeyframe, jEndKeyframe);
+    [Header("踏みつけ判定の高さの割合(%)")] public float stepOnRate = 20;
+
+    // TODO:Animatorを設定
+    //private Animator anim = null;
     private Rigidbody2D rb = null;
-    private CapsuleCollider2D capcol = null;
+
+    //  TODO:変数名を変更
+    private PolygonCollider2D capcol = null;
     private bool isGround = false;
     private bool isHead = false;
     private bool isRun = false;
@@ -35,10 +45,9 @@ public class Player : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        Debug.Log("0");
-        anim = GetComponent<Animator>();
+        //anim = GetComponent<Animator>();
         rb = GetComponent<Rigidbody2D>();
-        capcol = GetComponent<CapsuleCollider2D>();
+        capcol = GetComponent<PolygonCollider2D>();
     }
 
     // Update is called once per frame
@@ -46,7 +55,6 @@ public class Player : MonoBehaviour
     {
         if (!isDown)
         {
-            Debug.Log("1");
             //接地判定を得る
             isGround = ground.IsGround();
             isHead = head.IsGround(); 
@@ -55,12 +63,11 @@ public class Player : MonoBehaviour
             float xSpeed = GetXSpeed();
             float ySpeed = GetYSpeed();
 
+            // TODO:Animationを設定
             //アニメーションを適用
-            SetAnimation();
+            //SetAnimation();
 
             //移動速度を設定
-            Debug.Log(xSpeed.ToString("0.00"));
-            Debug.Log(ySpeed.ToString("0.00"));
             rb.velocity = new Vector2(xSpeed, ySpeed);
         }
         else
@@ -75,7 +82,6 @@ public class Player : MonoBehaviour
         float xSpeed = 0.0f;
         if (horizontalKey > 0)
         {
-            Debug.Log("2");
             transform.localScale = new Vector3(1, 1, 1);
             isRun = true;
             dashTime += Time.deltaTime;
@@ -83,7 +89,6 @@ public class Player : MonoBehaviour
         }
         else if (horizontalKey < 0)
         {
-            Debug.Log("3");
             transform.localScale = new Vector3(-1, 1, 1);
             isRun = true;
             dashTime += Time.deltaTime;
@@ -121,7 +126,6 @@ public class Player : MonoBehaviour
         {
             if (verticalKey > 0)
             {
-                Debug.Log("4");
                 ySpeed = jumpSpeed;
                 jumpPos = transform.position.y; //ジャンプした位置を記録する
                 isJump = true;
@@ -156,7 +160,6 @@ public class Player : MonoBehaviour
         //何かを踏んだときのジャンプ
         else if (isOtherJump)
         {
-            Debug.Log("6");
             //現在の高さが飛べる高さより下か
             bool canHeight = jumpPos + otherJumpHeight > transform.position.y;
             //ジャンプ時間が長くなりすぎてないか
@@ -164,13 +167,11 @@ public class Player : MonoBehaviour
 
             if (canHeight && canTime && !isHead)
             {
-                Debug.Log("7");
                 ySpeed = jumpSpeed;
                 jumpTime += Time.deltaTime;
             }
             else
             {
-                Debug.Log("8");
                 isOtherJump = false;
                 jumpTime = 0.0f;
             }
@@ -178,14 +179,13 @@ public class Player : MonoBehaviour
 
         if (isJump || isOtherJump)
         {
-            Debug.Log("9");
             ySpeed *= jumpCurve.Evaluate(jumpTime);
         }
         return ySpeed;
     }
     private void SetAnimation()
     {
-        anim.SetBool("run", isRun);
+        //anim.SetBool("run", isRun);
     }
 
     //敵との接触判定
@@ -193,12 +193,17 @@ public class Player : MonoBehaviour
     {
         if (collision.collider.tag == enemyTag)
         {
-            Debug.Log("10");
             //踏みつけ判定になる高さ
-            float stepOnHeight = (capcol.size.y * (stepOnRate / 100f));
+            //float stepOnHeight = (capcol.size.y * (stepOnRate / 100f));
+
+            // TODO:capcol.sizeの代わりになるものを探す
+            float stepOnHeight = (1 * (stepOnRate / 100f));
 
             //踏みつけ判定のワールド座標
-            float judgePos = transform.position.y - (capcol.size.y / 2f) + stepOnHeight;
+            //float judgePos = transform.position.y - (capcol.size.y / 2f) + stepOnHeight;
+
+            // TODO:capcol.sizeの代わりになるものを探す
+            float judgePos = transform.position.y - (1 / 2f) + stepOnHeight;
 
             foreach (ContactPoint2D p in collision.contacts)
             {
@@ -207,7 +212,6 @@ public class Player : MonoBehaviour
                     ObjectCollision o = collision.gameObject.GetComponent<ObjectCollision>();
                     if (o != null)
                     {
-                        Debug.Log("11");
                         otherJumpHeight = o.boundHeight;    //踏んづけたものから跳ねる高さを取得する
                         o.playerStepOn = true;        //踏んづけたものに対して踏んづけた事を通知する
                         jumpPos = transform.position.y; //ジャンプした位置を記録する 
@@ -222,7 +226,7 @@ public class Player : MonoBehaviour
                 }
                 else
                 {
-                    anim.Play("down");
+                    //anim.Play("down");
                     isDown = true;
                     break;
                 }
