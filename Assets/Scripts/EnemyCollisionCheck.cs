@@ -14,7 +14,6 @@ public class EnemyCollisionCheck : MonoBehaviour
     {
         if (collision.tag == groundTag || collision.tag == enemyTag)
         {
-            Debug.Log("1");
             isOn = true;
         }
     }
@@ -23,7 +22,6 @@ public class EnemyCollisionCheck : MonoBehaviour
     {
         if (collision.tag == groundTag || collision.tag == enemyTag)
         {
-            Debug.Log("2");
             isOn = false;
         }
     }
