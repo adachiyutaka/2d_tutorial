@@ -27,10 +27,8 @@ public class ImageImport :  MonoBehaviour
     {
         WWWForm form = new WWWForm();
         string id = jstest.URI;
-        //string url = $"http://localhost:3000/games/{id}/image/";
-        string url = "http://localhost:3000/games/1/image/";
-        // UnityWebRequest www = UnityWebRequest.Post("http://localhost:3000/games/image/", form);
-        //UnityWebRequest www = UnityWebRequest.Get("http://localhost:3000/games/image/");
+        string url = $"http://localhost:3000/games/2/image/";
+        //string url = "http://localhost:3000/games/1/image/";
         UnityWebRequest request = UnityWebRequest.Get(url);
         request.SetRequestHeader("Content-Type", "application/json");
 
@@ -70,17 +68,18 @@ public class ImageImport :  MonoBehaviour
         texture.LoadImage(bytes);
         GetComponent<Renderer>().material.mainTexture = texture;
         
-        GameObject gameObject = (GameObject)Resources.Load("New Sprite");
+        GameObject gameObject = GameObject.Find("Player");
         GameObject groundCheck = (GameObject)Resources.Load("GroundCheck");
         GameObject headCheck = (GameObject)Resources.Load("HeadCheck");
         SpriteRenderer spriteRenderer = gameObject.GetComponent<SpriteRenderer>();
-        spriteRenderer.sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), Vector2.zero);
+        spriteRenderer.sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f));
         gameObject.AddComponent<PolygonCollider2D>();
         gameObject.AddComponent<Rigidbody2D>();
+        gameObject.GetComponent<Rigidbody2D>().constraints = RigidbodyConstraints2D.FreezeRotation;
         gameObject.AddComponent<Player>();
         // New Spriteプレハブを元に、インスタンスを生成、
-        gameObject = (GameObject)Instantiate(gameObject, new Vector3(0.0f, 4.0f, 0.0f), Quaternion.identity);
-        groundCheck = (GameObject)Instantiate(groundCheck, new Vector3(0.0f, 4.0f, 0.0f), Quaternion.identity);
+        // gameObject = (GameObject)Instantiate(gameObject, new Vector3(0.0f, 4.0f, 0.0f), Quaternion.identity);
+        groundCheck = (GameObject)Instantiate(groundCheck, gameObject.transform.position, Quaternion.identity);
         headCheck = (GameObject)Instantiate(headCheck, gameObject.transform.position, Quaternion.identity);
         groundCheck.transform.parent = gameObject.transform;
         headCheck.transform.parent = gameObject.transform;

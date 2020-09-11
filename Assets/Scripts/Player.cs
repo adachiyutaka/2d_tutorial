@@ -4,9 +4,9 @@ using UnityEngine;
 
 public class Player : MonoBehaviour
 {
-    [Header("移動速度")] public float speed = 4;
-    [Header("重力")] public float gravity = 2;
-    [Header("ジャンプ速度")] public float jumpSpeed = 5;
+    [Header("移動速度")] public float speed = 7;
+    [Header("重力")] public float gravity = 7;
+    [Header("ジャンプ速度")] public float jumpSpeed = 7;
     [Header("ジャンプする高さ")] public float jumpHeight = 3;
     [Header("ジャンプする長さ")] public float jumpLimitTime = 5;
     [Header("接地判定")] public GroundCheck ground;
@@ -27,7 +27,7 @@ public class Player : MonoBehaviour
     private Rigidbody2D rb = null;
 
     //  TODO:変数名を変更
-    private PolygonCollider2D capcol = null;
+    private PolygonCollider2D polycol2d = null;
     private bool isGround = false;
     private bool isHead = false;
     private bool isRun = false;
@@ -47,7 +47,7 @@ public class Player : MonoBehaviour
     {
         //anim = GetComponent<Animator>();
         rb = GetComponent<Rigidbody2D>();
-        capcol = GetComponent<PolygonCollider2D>();
+        polycol2d = GetComponent<PolygonCollider2D>();
     }
 
     // Update is called once per frame
@@ -82,14 +82,14 @@ public class Player : MonoBehaviour
         float xSpeed = 0.0f;
         if (horizontalKey > 0)
         {
-            transform.localScale = new Vector3(1, 1, 1);
+            transform.localScale = new Vector3(0.3f, 0.3f, 1);
             isRun = true;
             dashTime += Time.deltaTime;
             xSpeed = speed;
         }
         else if (horizontalKey < 0)
         {
-            transform.localScale = new Vector3(-1, 1, 1);
+            transform.localScale = new Vector3(-0.3f, 0.3f, 1);
             isRun = true;
             dashTime += Time.deltaTime;
             xSpeed = -speed;
@@ -138,7 +138,6 @@ public class Player : MonoBehaviour
         }
         else if (isJump)
         {
-            Debug.Log("5");
             //上方向キーを押しているか
             bool pushUpKey = verticalKey > 0;
             //現在の高さが飛べる高さより下か
