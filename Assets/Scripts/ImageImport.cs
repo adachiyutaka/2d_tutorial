@@ -27,11 +27,11 @@ public class ImageImport :  MonoBehaviour
     {
         WWWForm form = new WWWForm();
         string id = jstest.URI;
-        string url = $"http://localhost:3000/games/2/image/";
-        //string url = "http://localhost:3000/games/1/image/";
+        //string url = $"http://localhost:3000/games/{id}/image/";
+        string url = "http://localhost:3000/games/8/image/";
         UnityWebRequest request = UnityWebRequest.Get(url);
         request.SetRequestHeader("Content-Type", "application/json");
-
+        Debug.Log("yield");
         //画像を取得できるまで待つ
         yield return request.SendWebRequest();
 
@@ -42,12 +42,18 @@ public class ImageImport :  MonoBehaviour
         else
         {
             //取得した画像のテクスチャ
-            byte[] results = request.downloadHandler.data;
-            CreateSpriteFromBytes(results);
+            // byte[] results = request.downloadHandler.data;
+            // CreateSpriteFromBytes(results);
+            Debug.Log("responsed");
+            string json = request.downloadHandler.text;
+            Debug.Log("json");
+            ImageJson imageJson = JsonUtility.FromJson<ImageJson>(json);
+            byte[] byteArray = Convert.FromBase64String(imageJson.base64);
+            CreateTextureFromBytes(byteArray);
         }
     }
 
-    public void CreateSpriteFromBytes(byte[] bytes)
+    public void CreateTextureFromBytes(byte[] bytes)
     {
         //横サイズの判定
         int pos = 16;
@@ -88,4 +94,24 @@ public class ImageImport :  MonoBehaviour
 
         //return Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), Vector2.zero);
     }
+
+    // byte配列 → イメージ(Texture)
+    Texture BytesToTexture(byte[] byteArray, int width, int height) {
+        Texture2D texture = new Texture2D(width, height);
+        texture.LoadImage(byteArray);
+        return texture;
+    }
+
+    // Base64 → イメージ(Texture)
+    Texture Base64ToImage(string base64Text, int width, int height) {
+        byte[] byteArray = Convert.FromBase64String(base64Text);
+        return BytesToTexture(byteArray, width, height);
+    }
+}
+
+[Serializable]
+public class ImageJson
+{
+    public string stage;
+    public string player;
 }
