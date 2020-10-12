@@ -40,6 +40,7 @@ public class Player : MonoBehaviour
     private float beforeKey;
     private string enemyTag = "Enemy";
 
+    // private Animator anim = null; 
 
 
     // Start is called before the first frame update
@@ -48,6 +49,7 @@ public class Player : MonoBehaviour
         //anim = GetComponent<Animator>();
         rb = GetComponent<Rigidbody2D>();
         polycol2d = GetComponent<PolygonCollider2D>();
+        // anim = GetComponent<Animator>();            rb.velocity = new Vector2 (0.0f, 7.0f);
     }
 
     // Update is called once per frame
@@ -113,13 +115,12 @@ public class Player : MonoBehaviour
 
         beforeKey = horizontalKey;
         xSpeed *= dashCurve.Evaluate(dashTime);
-        beforeKey = horizontalKey;
         return xSpeed;
     }
     private float GetYSpeed()
     {
         float verticalKey = Input.GetAxis("Vertical");
-        float ySpeed = -gravity;
+        float ySpeed = 0.0f;
 
         //通常のジャンプ
         if (isGround)
@@ -145,9 +146,20 @@ public class Player : MonoBehaviour
             //ジャンプ時間が長くなりすぎてないか
             bool canTime = jumpLimitTime > jumpTime;
 
-            if (pushUpKey && canHeight && canTime && !isHead)
+            // if (pushUpKey && canHeight && canTime && !isHead)
+            // {
+            //     ySpeed = jumpSpeed;
+            //     jumpTime += Time.deltaTime;
+            // }
+            // else
+            // {
+            //     isJump = false;
+            //     jumpTime = 0.0f;
+            // }
+
+            if (pushUpKey && !isHead)
             {
-                ySpeed = jumpSpeed;
+                ySpeed = rb.velocity.y;
                 jumpTime += Time.deltaTime;
             }
             else
@@ -178,14 +190,18 @@ public class Player : MonoBehaviour
 
         if (isJump || isOtherJump)
         {
-            ySpeed *= jumpCurve.Evaluate(jumpTime);
+            // ySpeed *= jumpCurve.Evaluate(jumpTime);
         }
+
         return ySpeed;
     }
-    private void SetAnimation()
-    {
-        //anim.SetBool("run", isRun);
-    }
+
+    // private void SetAnimation()
+    // {
+    //     anim.SetBool("jump", isJump);
+    //     anim.SetBool("ground", isGround);
+    //     anim.SetBool("run", isRun);
+    // }
 
     //敵との接触判定
     private void OnCollisionEnter2D(Collision2D collision)
