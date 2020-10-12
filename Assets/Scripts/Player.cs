@@ -120,7 +120,7 @@ public class Player : MonoBehaviour
     private float GetYSpeed()
     {
         float verticalKey = Input.GetAxis("Vertical");
-        float ySpeed = 0.0f;
+        float ySpeed = -gravity;
 
         //通常のジャンプ
         if (isGround)
@@ -146,20 +146,9 @@ public class Player : MonoBehaviour
             //ジャンプ時間が長くなりすぎてないか
             bool canTime = jumpLimitTime > jumpTime;
 
-            // if (pushUpKey && canHeight && canTime && !isHead)
-            // {
-            //     ySpeed = jumpSpeed;
-            //     jumpTime += Time.deltaTime;
-            // }
-            // else
-            // {
-            //     isJump = false;
-            //     jumpTime = 0.0f;
-            // }
-
-            if (pushUpKey && !isHead)
+            if (pushUpKey && canHeight && canTime && !isHead)
             {
-                ySpeed = rb.velocity.y;
+                ySpeed = jumpSpeed;
                 jumpTime += Time.deltaTime;
             }
             else
@@ -167,6 +156,17 @@ public class Player : MonoBehaviour
                 isJump = false;
                 jumpTime = 0.0f;
             }
+
+            // if (pushUpKey && !isHead)
+            // {
+            //     ySpeed = rb.velocity.y;
+            //     jumpTime += Time.deltaTime;
+            // }
+            // else
+            // {
+            //     isJump = false;
+            //     jumpTime = 0.0f;
+            // }
         }
         //何かを踏んだときのジャンプ
         else if (isOtherJump)
@@ -190,7 +190,7 @@ public class Player : MonoBehaviour
 
         if (isJump || isOtherJump)
         {
-            // ySpeed *= jumpCurve.Evaluate(jumpTime);
+            ySpeed *= jumpCurve.Evaluate(jumpTime);
         }
 
         return ySpeed;

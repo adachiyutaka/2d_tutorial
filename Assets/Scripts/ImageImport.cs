@@ -76,6 +76,7 @@ public class ImageImport :  MonoBehaviour
             headCheck.transform.parent = player.transform;
             player.GetComponent<Player>().ground = groundCheck.GetComponent<GroundCheck>();
             player.GetComponent<Player>().head = headCheck.GetComponent<GroundCheck>();
+            player.GetComponent<Player>().head.checkPlatformGround = false;
 
             //return Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), Vector2.zero);
 

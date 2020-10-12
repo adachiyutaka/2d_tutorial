@@ -5,7 +5,10 @@ using UnityEngine;
 public class GroundCheck : MonoBehaviour
 {
     // Start is called before the first frame update
+    [Header("エフェクトがついた床を判定するか")] public bool checkPlatformGround = true;
+
     private string groundTag = "Ground";
+    private string platformTag = "GroundPlatform";
     private bool isGround = false; 
     private bool isGroundEnter, isGroundStay, isGroundExit;
 
@@ -34,6 +37,10 @@ public class GroundCheck : MonoBehaviour
         {
             isGroundEnter = true;
         }
+        else if(checkPlatformGround && collision.tag == platformTag)
+        {
+            isGroundEnter = true;
+        }
     }
     
     private void OnTriggerStay2D(Collider2D collision)
@@ -42,6 +49,10 @@ public class GroundCheck : MonoBehaviour
         {
             isGroundStay = true;
         }
+        else if(checkPlatformGround && collision.tag == platformTag)
+        {
+            isGroundEnter = true;
+        }
     }
         
     private void OnTriggerExit2D(Collider2D collision)
@@ -49,6 +60,10 @@ public class GroundCheck : MonoBehaviour
     if (collision.tag == groundTag)
         {
             isGroundExit = true;
+        }
+        else if(checkPlatformGround && collision.tag == platformTag)
+        {
+            isGroundEnter = true;
         }
     }
 }
