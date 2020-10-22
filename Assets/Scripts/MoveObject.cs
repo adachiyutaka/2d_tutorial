@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class MovePlatform : MonoBehaviour
+public class MoveObject : MonoBehaviour
 {
     [Header("移動経路")]public GameObject[] movePoint;
     [Header("速さ")]public float speed = 1.0f;
@@ -10,6 +10,8 @@ public class MovePlatform : MonoBehaviour
     private Rigidbody2D rb;
     private int nowPoint = 0;
     private bool returnPoint = false;
+    private Vector2 oldPos = Vector2.zero;
+    private Vector2 myVelocity = Vector2.zero;
     // Start is called before the first frame update
     void Start()
     {
@@ -17,7 +19,13 @@ public class MovePlatform : MonoBehaviour
         if (movePoint != null &&movePoint.Length > 0 && rb != null)
         {
             rb.position = movePoint[0].transform.position;
+            oldPos = rb.position;
         }
+    }
+
+    public Vector2 GetVelocity()
+    {
+        return myVelocity;
     }
 
     // Update is called once per frame
@@ -79,6 +87,8 @@ public class MovePlatform : MonoBehaviour
                     }
                 }
             }
+            myVelocity = (rb.position - oldPos) / Time.deltaTime;
+            oldPos = rb.position;
         }
     }
 }

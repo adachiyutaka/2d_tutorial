@@ -20,7 +20,7 @@ public class Player : MonoBehaviour
     static Keyframe jEndKeyframe = new Keyframe(1.3f, 0.5f);
     [Header("ダッシュの速さ表現")] public AnimationCurve dashCurve = new AnimationCurve(dStartKeyframe, dEndKeyframe);
     [Header("ジャンプの速さ表現")] public AnimationCurve jumpCurve = new AnimationCurve(jStartKeyframe, jEndKeyframe);
-    [Header("踏みつけ判定の高さの割合(%)")] public float stepOnRate = 20;
+    [Header("踏みつけ判定の高さの割合(%)")] public float stepOnRate = 2;
 
     // TODO:Animatorを設定
     //private Animator anim = null;
@@ -28,6 +28,7 @@ public class Player : MonoBehaviour
 
     //  TODO:変数名を変更
     private PolygonCollider2D polycol2d = null;
+    private MoveObject moveObj = null;
     private bool isGround = false;
     private bool isHead = false;
     private bool isRun = false;
@@ -39,6 +40,12 @@ public class Player : MonoBehaviour
     private float dashTime,jumpTime;
     private float beforeKey;
     private string enemyTag = "Enemy";
+    private string moveFloorTag = "MoveFloor";
+    private float downTime = 0.0f;
+    private bool isContinue = false; 
+    private float continueTime = 0.0f;
+    private float blinkTime = 0.0f; 
+    private SpriteRenderer sr = null;
 
     // private Animator anim = null; 
 
@@ -49,6 +56,7 @@ public class Player : MonoBehaviour
         //anim = GetComponent<Animator>();
         rb = GetComponent<Rigidbody2D>();
         polycol2d = GetComponent<PolygonCollider2D>();
+        sr = GetComponent<SpriteRenderer>();
         // anim = GetComponent<Animator>();            rb.velocity = new Vector2 (0.0f, 7.0f);
     }
 
@@ -59,23 +67,26 @@ public class Player : MonoBehaviour
         {
             //接地判定を得る
             isGround = ground.IsGround();
-            isHead = head.IsGround(); 
+            isHead = head.IsGround();
     
             //各種座標軸の速度を求める
             float xSpeed = GetXSpeed();
             float ySpeed = GetYSpeed();
 
-            // TODO:Animationを設定
-            //アニメーションを適用
-            //SetAnimation();
-
             //移動速度を設定
-            rb.velocity = new Vector2(xSpeed, ySpeed);
+            Vector2 addVelocity = Vector2.zero;
+            if (moveObj != null)
+            {
+                addVelocity = moveObj.GetVelocity();
+            }
+            rb.velocity = new Vector2(xSpeed, ySpeed) + addVelocity;
         }
         else
         {
             rb.velocity = new Vector2(0, -gravity);
         }
+
+        SetAnimation();
     }
 
     private float GetXSpeed()
@@ -196,12 +207,57 @@ public class Player : MonoBehaviour
         return ySpeed;
     }
 
+    private void Update()
+    {  
+        if (isContinue)
+        {
+            //明滅 ついている時に戻る
+            if(blinkTime > 0.2f)
+            {
+                sr.enabled = true;
+                blinkTime = 0.0f;
+            }
+            //明滅 消えているとき
+            else if (blinkTime > 0.1f)
+            {
+                sr.enabled = false;
+            }
+            //明滅 ついているとき
+            else
+            {
+                sr.enabled = true;
+            }
+
+            //1秒たったら明滅終わり
+            if(continueTime > 1.0f)
+            {
+                isContinue = false;
+                blinkTime = 0f;
+                continueTime = 0f;
+                sr.enabled = true;
+            }
+            else
+            {
+                blinkTime += Time.deltaTime;
+                continueTime += Time.deltaTime;
+            }
+        }
+    }
+
     // private void SetAnimation()
     // {
     //     anim.SetBool("jump", isJump);
     //     anim.SetBool("ground", isGround);
     //     anim.SetBool("run", isRun);
     // }
+    private void SetAnimation()
+    {
+        if(isDown)
+        {
+            polycol2d.enabled = false;
+            transform.Rotate(new Vector3(0, 0, 5));
+        }
+    }
 
     //敵との接触判定
     private void OnCollisionEnter2D(Collision2D collision)
@@ -247,5 +303,58 @@ public class Player : MonoBehaviour
                 }
             }
         }
+        //動く床
+        else if (collision.collider.tag == moveFloorTag)
+        {
+            //踏みつけ判定になる高さ
+            float stepOnHeight = (1 * (stepOnRate / 100f));
+            //踏みつけ判定のワールド座標
+            float judgePos = transform.position.y - (1 / 2f) + stepOnHeight;
+            foreach (ContactPoint2D p in collision.contacts)
+            {
+                //動く床に乗っている
+                if (p.point.y < judgePos)
+                {
+                    moveObj = collision.gameObject.GetComponent<MoveObject>();
+                }
+            }
+        }
+    }
+    private void OnCollisionExit2D(Collision2D collision)
+    {
+        if (collision.collider.tag == moveFloorTag)
+        {
+            //動く床から離れた
+            moveObj = null;
+        }
+    }
+
+    public bool IsContinueWaiting()
+    {
+    return IsDownAnimEnd();
+    }
+
+    private bool IsDownAnimEnd()
+    {
+        if(isDown)
+        {
+            downTime += Time.deltaTime;
+            if(downTime > 0.3f)
+            {
+                downTime = 0;
+                return true;
+            }
+        }
+        return false;
+    }
+    public void ContinuePlayer()
+    {
+        transform.eulerAngles = new Vector3(0, 0, 0);
+        polycol2d.enabled = true;
+        isDown = false;
+        isJump = false;
+        isOtherJump = false;
+        isRun = false;
+        isContinue = true;
     }
 }

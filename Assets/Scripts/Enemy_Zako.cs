@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class Enemy_Zako : MonoBehaviour
 {
+    [Header("加算スコア")]public int myScore;
     [Header("移動速度")]public float speed;
     [Header("重力")]public float gravity;
     [Header("画面外でも行動する")] public bool nonVisibleAct;
@@ -37,6 +38,10 @@ public class Enemy_Zako : MonoBehaviour
             {
                 //踏まれたときの処理（一回目しか通過しない）
                 //anim.Play("dead");
+                if (GManager.instance != null)
+                {
+                    GManager.instance.score += myScore;
+                }
                 rb.velocity = new Vector2(0, -gravity); 
                 isDead = true;
                 col.enabled = false;

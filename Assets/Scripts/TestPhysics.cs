@@ -26,13 +26,11 @@ public class TestPhysics : MonoBehaviour
             {
                 Vector2 force = new Vector2 (0.0f, forceY);    // 力を設定
                 rb.AddForce (force, ForceMode2D.Force);          // 力を加える
-                Debug.Log($"force: {rb.velocity}");
             }
             else
             {
                 Vector2 speed = new Vector2 (0.0f, speedY);    // 力を設定
                 rb.velocity = speed;
-                Debug.Log($"velocity: {rb.velocity}");
             }
             time = 0.0f;
         }
