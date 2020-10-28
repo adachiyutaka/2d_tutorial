@@ -1,11 +1,13 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
- using UnityEngine.SceneManagement;
+using UnityEngine.SceneManagement;
 
 public class Title : MonoBehaviour
 {
     [Header("フェード")] public FadeScreen fade;
+    [Header("ゲームスタートのSE")] public AudioClip startSE;
+
     private bool firstPush = false;
     private bool goNextScene = false;
 
@@ -14,6 +16,7 @@ public class Title : MonoBehaviour
         Debug.Log("Press Start!");
         if (!firstPush)
         {
+            GManager.instance.PlaySE(startSE);
             Debug.Log("Go Next Scene!");
             fade.StartFadeOut();
             firstPush = true;
@@ -24,7 +27,7 @@ public class Title : MonoBehaviour
     {
         if(!goNextScene && fade.IsFadeOutComplete())
         {
-            SceneManager.LoadScene("action");
+            SceneManager.LoadScene("stage1");
             goNextScene = true;
         }
     }

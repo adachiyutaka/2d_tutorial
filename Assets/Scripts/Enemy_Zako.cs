@@ -9,6 +9,8 @@ public class Enemy_Zako : MonoBehaviour
     [Header("重力")]public float gravity;
     [Header("画面外でも行動する")] public bool nonVisibleAct;
     [Header("接触判定")]public EnemyCollisionCheck checkCollision;
+    [Header("やられた時に鳴らすSE")] public AudioClip deadSE;
+
 
 
      private Rigidbody2D rb = null;
@@ -41,6 +43,7 @@ public class Enemy_Zako : MonoBehaviour
                 if (GManager.instance != null)
                 {
                     GManager.instance.score += myScore;
+                    GManager.instance.PlaySE(deadSE);
                 }
                 rb.velocity = new Vector2(0, -gravity); 
                 isDead = true;

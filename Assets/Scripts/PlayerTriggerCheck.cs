@@ -20,7 +20,7 @@ public class PlayerTriggerCheck : MonoBehaviour
     {
         if(collision.tag == playerTag)
         {
-            isOn = true;
+            isOn = false;
         }
     }
 }

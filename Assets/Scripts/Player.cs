@@ -11,6 +11,9 @@ public class Player : MonoBehaviour
     [Header("ジャンプする長さ")] public float jumpLimitTime = 5;
     [Header("接地判定")] public GroundCheck ground;
     [Header("天井判定")] public GroundCheck head;
+    [Header("ジャンプのSE")] public AudioClip jumpSE;
+    [Header("やられたときのSE")] public AudioClip downSE;
+    [Header("コンティニューのSE")] public AudioClip continueSE;
 
     //  TODO:もっと綺麗な形に変更
 
@@ -41,6 +44,7 @@ public class Player : MonoBehaviour
     private float beforeKey;
     private string enemyTag = "Enemy";
     private string moveFloorTag = "MoveFloor";
+    private string hitAreaTag = "HitArea";
     private float downTime = 0.0f;
     private bool isContinue = false; 
     private float continueTime = 0.0f;
@@ -63,7 +67,7 @@ public class Player : MonoBehaviour
     // Update is called once per frame
     void FixedUpdate()
     {
-        if (!isDown)
+        if (!isDown && !GManager.instance.isGameOver)
         {
             //接地判定を得る
             isGround = ground.IsGround();
@@ -138,6 +142,10 @@ public class Player : MonoBehaviour
         {
             if (verticalKey > 0)
             {
+                if(!isJump)
+                {
+                    GManager.instance.PlaySE(jumpSE);
+                }
                 ySpeed = jumpSpeed;
                 jumpPos = transform.position.y; //ジャンプした位置を記録する
                 isJump = true;
@@ -297,8 +305,7 @@ public class Player : MonoBehaviour
                 }
                 else
                 {
-                    //anim.Play("down");
-                    isDown = true;
+                    ReceiveDamage();
                     break;
                 }
             }
@@ -329,6 +336,25 @@ public class Player : MonoBehaviour
         }
     }
 
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        if(collision.tag == hitAreaTag)
+        {
+            ReceiveDamage();
+        }
+    }
+
+    private void ReceiveDamage()
+    {
+        if(isDown)
+        {
+            return;
+        }
+        isDown = true;
+        GManager.instance.PlaySE(downSE);
+        GManager.instance.SubHeartNum();
+    }
+
     public bool IsContinueWaiting()
     {
     return IsDownAnimEnd();
@@ -349,6 +375,7 @@ public class Player : MonoBehaviour
     }
     public void ContinuePlayer()
     {
+        GManager.instance.PlaySE(continueSE);
         transform.eulerAngles = new Vector3(0, 0, 0);
         polycol2d.enabled = true;
         isDown = false;

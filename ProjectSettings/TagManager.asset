@@ -8,6 +8,7 @@ TagManager:
   - Enemy
   - GroundPlatform
   - MoveFloor
+  - HitArea
   layers:
   - Default
   - TransparentFX
