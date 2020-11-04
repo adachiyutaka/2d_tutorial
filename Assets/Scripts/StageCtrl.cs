@@ -11,6 +11,9 @@ public class StageCtrl : MonoBehaviour
     [Header("フェード")] public FadeScreen fade;
     [Header("ゲームオーバーのSE")] public AudioClip gameOverSE;
     [Header("リトライのSE")] public AudioClip retrySE;
+    [Header("ステージクリアーSE")] public AudioClip stageClearSE;
+    [Header("ステージクリア")] public GameObject stageClearObj;
+    [Header("ステージクリア判定")] public PlayerTriggerCheck stageClearTrigger;
 
 
     private Player p;
@@ -19,6 +22,7 @@ public class StageCtrl : MonoBehaviour
     private bool doGameOver = false;
     private bool retryGame = false;
     private bool doSceneChange = false;
+    private bool doClear = false;
 
     // Start is called before the first frame update
     void Start()
@@ -45,13 +49,21 @@ public class StageCtrl : MonoBehaviour
             gameOverObj.SetActive(true);
             GManager.instance.PlaySE(gameOverSE);
             doGameOver = true;
+            GManager.instance.isGameOver = false;
         }
 
         // プレイヤーがやられた時の処理
-        if(p != null && p.IsContinueWaiting())
+        else if(p != null && p.IsContinueWaiting() && !doGameOver)
         {
             playerGO.transform.position = continuePoint[0].transform.position;
             p.ContinuePlayer();
+        }
+
+        // ステージクリア時の処理
+        else if(stageClearTrigger != null && stageClearTrigger.isOn && !doGameOver && !doClear)
+        {
+            StageClear();
+            doClear = true;
         }
 
         if(fade != null && startFade && !doSceneChange)
@@ -89,5 +101,12 @@ public class StageCtrl : MonoBehaviour
             fade.StartFadeOut();
             startFade = true;
         }
+    }
+
+    public void StageClear()
+    {
+        GManager.instance.isStageClear = true;
+        stageClearObj.SetActive(true);
+        GManager.instance.PlaySE(stageClearSE);
     }
 }

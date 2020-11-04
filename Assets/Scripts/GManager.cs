@@ -10,7 +10,8 @@ public class GManager : MonoBehaviour
     public int life;
     public int stageNum;
     public int continueNum;
-    public bool isGameOver = false;
+    [HideInInspector] public bool isGameOver = false;
+    [HideInInspector] public bool isStageClear = false;
     private AudioSource audioSource = null;
 
     private void Awake()

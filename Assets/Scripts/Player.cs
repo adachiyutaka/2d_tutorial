@@ -38,6 +38,7 @@ public class Player : MonoBehaviour
     private bool isJump = false;
     private bool isDown = false; 
     private bool isOtherJump = false;
+    private bool isClearMotion = false;
     private float jumpPos = 0.0f;
     private float otherJumpHeight = 0.0f;
     private float dashTime,jumpTime;
@@ -67,6 +68,7 @@ public class Player : MonoBehaviour
     // Update is called once per frame
     void FixedUpdate()
     {
+        // ダウン、ゲームオーバーではない場合
         if (!isDown && !GManager.instance.isGameOver)
         {
             //接地判定を得る
@@ -77,7 +79,7 @@ public class Player : MonoBehaviour
             float xSpeed = GetXSpeed();
             float ySpeed = GetYSpeed();
 
-            //移動速度を設定
+            //動く床の移動速度を設定
             Vector2 addVelocity = Vector2.zero;
             if (moveObj != null)
             {
@@ -85,8 +87,14 @@ public class Player : MonoBehaviour
             }
             rb.velocity = new Vector2(xSpeed, ySpeed) + addVelocity;
         }
-        else
+        // ゲームクリアーの場合
+        else if(!isClearMotion && GManager.instance.isStageClear)
         {
+            isClearMotion = true;
+        }
+        // ダウンしている場合
+        else
+        {   
             rb.velocity = new Vector2(0, -gravity);
         }
 

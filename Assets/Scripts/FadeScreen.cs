@@ -23,10 +23,10 @@ public class FadeScreen : MonoBehaviour
         fadeIn = true;
         compFadeIn = false;
         timer = 0.0f;
-        img.color = new Color(0f, 0.58f, 0.95f, 0);
-        img.fillAmount = 1;
+        img.color = new Color(0f, 0f, 0f, 0);
         img.raycastTarget = true;
     }
+
     public bool IsFadeInComplete()
     {
         return compFadeIn;
@@ -41,8 +41,7 @@ public class FadeScreen : MonoBehaviour
         fadeOut = true;
         compFadeIn = false;
         timer = 0.0f;
-        img.color = new Color(0f, 0.58f, 0.95f, 0);
-        img.fillAmount = 0;
+        img.color = new Color(0f, 0f, 0f, 0);
         img.raycastTarget = true;
     }
 
@@ -84,8 +83,7 @@ public class FadeScreen : MonoBehaviour
     {
         if(timer < 1f)
         {
-            img.color = new Color(0f, 0.58f, 0.95f, 1 - timer);
-            img.fillAmount = 1 - timer;
+            img.color = new Color(0f, 0f, 0f, 1 - timer);
         }
         else
         {
@@ -98,8 +96,7 @@ public class FadeScreen : MonoBehaviour
     {
         if(timer < 1f)
         {
-            img.color = new Color(0f, 0.58f, 0.95f, timer);
-            img.fillAmount = timer;
+            img.color = new Color(0f, 0f, 0f, timer);
         }
         else
         {
@@ -110,8 +107,7 @@ public class FadeScreen : MonoBehaviour
 
     private void FadeInComplete()
     {
-        img.color = new Color(0f, 0.58f, 0.95f, 0);
-        img.fillAmount = 0;
+        img.color = new Color(0f, 0f, 0f, 0);
         img.raycastTarget = false;
         timer = 0.0f;
         fadeIn = false;
@@ -119,8 +115,7 @@ public class FadeScreen : MonoBehaviour
     }
     private void FadeOutComplete()
     {
-        img.color = new Color(0f, 0.58f, 0.95f, 1);
-        img.fillAmount = 1;
+        img.color = new Color(0f, 0f, 0f, 1);
         img.raycastTarget = false;
         timer = 0.0f;
         fadeOut = false;
