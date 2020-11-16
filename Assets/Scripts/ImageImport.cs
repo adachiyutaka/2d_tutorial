@@ -28,7 +28,7 @@ public class ImageImport :  MonoBehaviour
         WWWForm form = new WWWForm();
         string id = jstest.URI;
         //string url = $"http://localhost:3000/games/{id}/image/";
-        string url = "http://localhost:3000/games/14/image/";
+        string url = "http://localhost:3000/games/1/image/";
         UnityWebRequest request = UnityWebRequest.Get(url);
         request.SetRequestHeader("Content-Type", "application/json");
         Debug.Log("yield");
@@ -47,7 +47,9 @@ public class ImageImport :  MonoBehaviour
             string json = request.downloadHandler.text;
             ImageJson imageJson = JsonUtility.FromJson<ImageJson>(json);
             Texture2D stageTexture = CreateTextureFromBytes(Convert.FromBase64String(imageJson.stage));
-            Texture2D texture = CreateTextureFromBytes(Convert.FromBase64String(imageJson.player));
+            Debug.Log("responsed");
+            Texture2D playerTexture = CreateTextureFromBytes(Convert.FromBase64String(imageJson.player));
+            Texture2D objectTexture = CreateTextureFromBytes(Convert.FromBase64String(imageJson.gameObject));
 
             // ステージを作成
             GameObject stage = new GameObject("Stage");
@@ -60,8 +62,8 @@ public class ImageImport :  MonoBehaviour
             GameObject player = GameObject.Find("Player");
             GameObject groundCheck = (GameObject)Resources.Load("GroundCheck");
             GameObject headCheck = (GameObject)Resources.Load("HeadCheck");
-            SpriteRenderer spriteRenderer = player.GetComponent<SpriteRenderer>();
-            spriteRenderer.sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f));
+            SpriteRenderer playerSR = player.GetComponent<SpriteRenderer>();
+            playerSR.sprite = Sprite.Create(playerTexture, new Rect(0, 0, playerTexture.width, playerTexture.height), new Vector2(0.5f, 0.5f));
             Vector2 startPosition = new Vector2(-10.0f, -3.0f);
             player.transform.position = startPosition;
             player.AddComponent<PolygonCollider2D>();
@@ -80,6 +82,13 @@ public class ImageImport :  MonoBehaviour
 
             //return Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), Vector2.zero);
 
+            //敵キャラクターを作成
+            GameObject enemy = (GameObject)Resources.Load("Enemy");
+            SpriteRenderer enemySR = enemy.GetComponent<SpriteRenderer>();
+            enemySR.sprite = Sprite.Create(objectTexture, new Rect(0, 0, objectTexture.width, objectTexture.height), new Vector2(0.5f, 0.5f));
+            enemy.AddComponent<PolygonCollider2D>();
+            enemy.AddComponent<Rigidbody2D>();
+            // enemy.GetComponent<Rigidbody2D>().constraints = RigidbodyConstraints2D.FreezeRotation;
         }
     }
 
@@ -114,4 +123,5 @@ public class ImageJson
 {
     public string stage;
     public string player;
+    public string gameObject;
 }
