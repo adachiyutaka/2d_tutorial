@@ -17,7 +17,8 @@ public class Enemy_Zako : MonoBehaviour
      private SpriteRenderer sr = null;
      private Animator anim = null;
      private ObjectCollision oc = null;
-     private BoxCollider2D col = null;
+    //  private BoxCollider2D col = null;
+     private PolygonCollider2D col = null;
      private bool rightTleftF = false;
      private bool isDead = false;
 
@@ -28,7 +29,7 @@ public class Enemy_Zako : MonoBehaviour
         sr = GetComponent<SpriteRenderer>(); 
         anim = GetComponent<Animator>();
         oc = GetComponent<ObjectCollision>();
-        col = GetComponent<BoxCollider2D>();
+        col = GetComponent<PolygonCollider2D>();
     }
 
     // Update is called once per frame
@@ -69,11 +70,11 @@ public class Enemy_Zako : MonoBehaviour
                 if (rightTleftF)
                 {
                     xVector = 1;
-                    transform.localScale = new Vector3(1, 1, 1);
+                    transform.localScale = new Vector3(0.1f, 0.1f, 1);
                 }
                 else
                 {
-                    transform.localScale = new Vector3(-1, 1, 1);
+                    transform.localScale = new Vector3(-0.1f, 0.1f, 1);
                 }
                 rb.velocity = new Vector2(xVector * speed, -gravity);
             } 

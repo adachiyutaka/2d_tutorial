@@ -47,7 +47,6 @@ public class ImageImport :  MonoBehaviour
             string json = request.downloadHandler.text;
             ImageJson imageJson = JsonUtility.FromJson<ImageJson>(json);
             Texture2D stageTexture = CreateTextureFromBytes(Convert.FromBase64String(imageJson.stage));
-            Debug.Log("responsed");
             Texture2D playerTexture = CreateTextureFromBytes(Convert.FromBase64String(imageJson.player));
             Texture2D objectTexture = CreateTextureFromBytes(Convert.FromBase64String(imageJson.gameObject));
 
@@ -84,11 +83,18 @@ public class ImageImport :  MonoBehaviour
 
             //敵キャラクターを作成
             GameObject enemy = (GameObject)Resources.Load("Enemy");
+            GameObject enemyColCheck = (GameObject)Resources.Load("enemyCollisionCheck");
+            enemy = (GameObject)Instantiate(enemy, new Vector3(-5.0f,-3.0f,0.0f), Quaternion.identity);
+            enemyColCheck = (GameObject)Instantiate(enemyColCheck, enemy.transform.position, Quaternion.identity);
+            enemyColCheck.transform.parent = enemy.transform;
+            Debug.Log(enemy.GetComponent<Enemy_Zako>().checkCollision);
+            enemy.GetComponent<Enemy_Zako>().checkCollision = enemyColCheck.GetComponent<EnemyCollisionCheck>();
+            Debug.Log(enemy.GetComponent<Enemy_Zako>().checkCollision);
+            enemy.AddComponent<SpriteRenderer>();
             SpriteRenderer enemySR = enemy.GetComponent<SpriteRenderer>();
             enemySR.sprite = Sprite.Create(objectTexture, new Rect(0, 0, objectTexture.width, objectTexture.height), new Vector2(0.5f, 0.5f));
             enemy.AddComponent<PolygonCollider2D>();
-            enemy.AddComponent<Rigidbody2D>();
-            // enemy.GetComponent<Rigidbody2D>().constraints = RigidbodyConstraints2D.FreezeRotation;
+            enemy.GetComponent<Rigidbody2D>().constraints = RigidbodyConstraints2D.FreezeRotation;
         }
     }
 
