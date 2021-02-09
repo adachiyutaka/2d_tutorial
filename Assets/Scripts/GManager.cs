@@ -30,7 +30,6 @@ public class GManager : MonoBehaviour
     private void Start()
     {
         audioSource = GetComponent<AudioSource>();
-        Debug.Log($"audioSource: {audioSource}");
     }
 
     public void AddHeartNum()

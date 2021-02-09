@@ -107,14 +107,14 @@ public class Player : MonoBehaviour
         float xSpeed = 0.0f;
         if (horizontalKey > 0)
         {
-            transform.localScale = new Vector3(0.3f, 0.3f, 1);
+            transform.localScale = new Vector3(1, 1, 1);
             isRun = true;
             dashTime += Time.deltaTime;
             xSpeed = speed;
         }
         else if (horizontalKey < 0)
         {
-            transform.localScale = new Vector3(-0.3f, 0.3f, 1);
+            transform.localScale = new Vector3(-1, 1, 1);
             isRun = true;
             dashTime += Time.deltaTime;
             xSpeed = -speed;
