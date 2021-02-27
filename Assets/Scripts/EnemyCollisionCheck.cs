@@ -12,7 +12,7 @@ public class EnemyCollisionCheck : MonoBehaviour
     // Start is called before the first frame update
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        if (collision.tag == groundTag || collision.tag == enemyTag)
+        if (collision.tag == groundTag || (collision.tag == enemyTag))
         {
             isOn = true;
         }

@@ -4,14 +4,12 @@ using UnityEngine;
 
 public class Enemy_Zako : MonoBehaviour
 {
-    [Header("加算スコア")]public int myScore;
-    [Header("移動速度")]public float speed;
-    [Header("重力")]public float gravity;
+    [Header("加算スコア")]public int myScore = 10;
+    [Header("移動速度")]public float speed = 1.0f;
+    [Header("重力")]public float gravity = 1.0f;
     [Header("画面外でも行動する")] public bool nonVisibleAct;
     [Header("接触判定")]public EnemyCollisionCheck checkCollision;
     [Header("やられた時に鳴らすSE")] public AudioClip deadSE;
-
-
 
      private Rigidbody2D rb = null;
      private SpriteRenderer sr = null;
@@ -26,7 +24,7 @@ public class Enemy_Zako : MonoBehaviour
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
-        sr = GetComponent<SpriteRenderer>(); 
+        sr = GetComponent<SpriteRenderer>();
         anim = GetComponent<Animator>();
         oc = GetComponent<ObjectCollision>();
         col = GetComponent<PolygonCollider2D>();
@@ -65,24 +63,22 @@ public class Enemy_Zako : MonoBehaviour
                 {
                     rightTleftF = !rightTleftF;
                 }
-
                 int xVector = -1;
                 if (rightTleftF)
                 {
                     xVector = 1;
-                    transform.localScale = new Vector3(0.1f, 0.1f, 1);
+                    transform.localScale = new Vector3(1, 1, 1);
                 }
                 else
                 {
-                    transform.localScale = new Vector3(-0.1f, 0.1f, 1);
+                    transform.localScale = new Vector3(-1, 1, 1);
                 }
                 rb.velocity = new Vector2(xVector * speed, -gravity);
-            } 
+            }
             else
             {
                 rb.Sleep();
             }
         }
-
     }
 }

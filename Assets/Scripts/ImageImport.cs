@@ -28,7 +28,7 @@ public class ImageImport :  MonoBehaviour
         WWWForm form = new WWWForm();
         string id = jstest.URI;
         //string url = $"http://localhost:3000/games/{id}/image/";
-        string url = "http://localhost:3000/games/9/image/";
+        string url = "http://localhost:3000/games/31/image/";
         UnityWebRequest request = UnityWebRequest.Get(url);
         request.SetRequestHeader("Content-Type", "application/json");
         //画像を取得できるまで待つ
@@ -47,41 +47,31 @@ public class ImageImport :  MonoBehaviour
             GameJson game = JsonUtility.FromJson<GameJson>(jsonText);
             Debug.Log("yield");
 
-            Debug.Log(game.stage.width);
-            Debug.Log(game.stage.height);
+            Debug.Log($"stage.width: {game.stage.width}, stage.height{game.stage.height}");
 
             foreach (var obj in game.objects)
             {
-                Debug.Log(obj.symbol);
-                Debug.Log(obj.image);
-                Debug.Log(obj.isObject);
-                Debug.Log(obj.isPlayer);
+                Debug.Log($"symbol:{obj.symbol}");
+                Debug.Log($"image:{obj.image}");
+                Debug.Log($"isObject:{obj.isObject}, isPlayer:{obj.isPlayer}, isEnemy:{obj.isEnemy}");
             }
             foreach (var position in game.positions)
             {
-                Debug.Log(position.symbol);
-                Debug.Log(position.height);
-                Debug.Log(position.width);
-                Debug.Log(position.x);
-                Debug.Log(position.y);
+                Debug.Log($"symbol:{position.symbol}");
+                Debug.Log($"height:{position.height}, width:{position.width}, x:{position.y}, x:{position.y}");
             }
             foreach (var objectPosition in game.objectPositions)
             {
-                Debug.Log(objectPosition.objectId);
-                Debug.Log(objectPosition.positionId);
+                Debug.Log($"objectId:{objectPosition.objectId}, positionId:{objectPosition.positionId}");
             }
-            
-            // Texture2D stageTexture = CreateTextureFromBytes(Convert.FromBase64String(game.objects[0].image));
 
-            // Texture2D playerTexture = CreateTextureFromBytes(Convert.FromBase64String(imageJson.player));
-            // Texture2D objectTexture = CreateTextureFromBytes(Convert.FromBase64String(imageJson.gameObject));
 
             foreach (var objPos in game.objectPositions)
             {
                 // objectPositionに紐付いたobjectとpositionを参照
                 ObjectJson obj = game.objects[objPos.objectId];
                 PositionJson pos = game.positions[objPos.positionId];
-                // GameObjectの役割を与える
+                // GameObjectに役割を与える
                 if (obj.isObject)
                 {
                     // GameObjectを作成し、スプライトを登録
@@ -99,85 +89,71 @@ public class ImageImport :  MonoBehaviour
                     CreateSprite(player, objPos, game);
                     // Playerスクリプトを設定
                     player.AddComponent<Player>();
-                    // Colliderを設定
+                    // Rigidbody2D、回転の無効化を設定
                     player.AddComponent<Rigidbody2D>();
                     player.GetComponent<Rigidbody2D>().constraints = RigidbodyConstraints2D.FreezeRotation;
                     // 足元と頭の接地判定を設定
+                    //  pixel単位のheightをそのまま使うと大きすぎるので、100分の一にする
                     Vector3 playerPos = player.transform.position;
-                    Debug.Log($"playerPos.y: {playerPos.y}, playerPos.x: {playerPos.x}, pos.height->/200: {(float)pos.height/200} -> {(float)pos.height/200}, pos.width: {pos.width}, pos.x: {pos.x}, pos.y: {pos.y}, pos.x/100: {(float)pos.x/100}, pos.y/10: {pos.y/10f}");
                     Vector3 groundPos = new Vector3(playerPos.x, playerPos.y - (float)pos.height/200, playerPos.z);
                     Vector3 headPos = new Vector3(playerPos.x, playerPos.y + (float)pos.height/200, playerPos.z);
+                    //  判定用のGameObjectを生成する
                     groundCheck = (GameObject)Instantiate(groundCheck, groundPos, Quaternion.identity);
                     headCheck = (GameObject)Instantiate(headCheck, headPos, Quaternion.identity);
+                    //  判定用GameObjectの横幅を設定し、プレイヤーの位置と親子関係にする
                     groundCheck.transform.localScale = new Vector2((float)pos.width/100, 1);
                     headCheck.transform.localScale = new Vector2((float)pos.width/100, 1);
                     groundCheck.transform.parent = player.transform;
                     headCheck.transform.parent = player.transform;
+                    //  プレイヤーのコンポーネントに設定する
                     player.GetComponent<Player>().ground = groundCheck.GetComponent<GroundCheck>();
                     player.GetComponent<Player>().head = headCheck.GetComponent<GroundCheck>();
                     player.GetComponent<Player>().head.checkPlatformGround = false;
+                } else if (obj.isEnemy){
+                    // 敵キャラクター、接触判定のGameObjectを作成し、スプライトを登録
+                    GameObject enemy = new GameObject();
+                    GameObject enemyColCheck = (GameObject)Resources.Load("enemyCollisionCheck");
+                    CreateSprite(enemy, objPos, game);
+                    // Enemy_zako, ObjectCollisionスクリプトを設定
+                    enemy.AddComponent<Enemy_Zako>();
+                    enemy.AddComponent<ObjectCollision>();
+                    // Rigidbody2Dと回転の無効化をの設定
+                    enemy.AddComponent<Rigidbody2D>();
+                    enemy.GetComponent<Rigidbody2D>().constraints = RigidbodyConstraints2D.FreezeRotation;
+                    // 足元と頭の接地判定を設定
+                    //  pixel単位のheightをそのまま使うと大きすぎるので、100分の一にする
+                    Vector3 enemyPos = enemy.transform.position;
+                    Vector3 frontPos = new Vector3(enemyPos.x + (float)pos.width/200, enemyPos.y, enemyPos.z);
+                    //  判定用のGameObjectを生成する
+                    enemyColCheck = (GameObject)Instantiate(enemyColCheck, frontPos, Quaternion.identity);
+                    //  判定用GameObjectの横幅を設定し、プレイヤーの位置と親子関係にする
+                    enemyColCheck.transform.localScale = new Vector2(1, (float)pos.height/110);
+                    enemyColCheck.transform.parent = enemy.transform;
+                    //  敵キャラクターのコンポーネントに設定する
+                    enemy.GetComponent<Enemy_Zako>().checkCollision = enemyColCheck.GetComponent<EnemyCollisionCheck>();
+                    // タグを設定する
+                    enemy.tag = "Enemy";
                 }
             }
-
-            // ステージを作成
-            // GameObject stage = new GameObject("Stage");
-            // stage.AddComponent<SpriteRenderer>();
-            // stage.GetComponent<SpriteRenderer>().sprite = Sprite.Create(stageTexture, new Rect(0, 0, stageTexture.width, stageTexture.height), new Vector2(0.5f, 0.5f));
-            // stage.AddComponent<PolygonCollider2D>();
-            // stage.tag = "Ground";
-
-            // プレイヤーを作成
-            // GameObject player = GameObject.Find("Player");
-            // GameObject groundCheck = (GameObject)Resources.Load("GroundCheck");
-            // GameObject headCheck = (GameObject)Resources.Load("HeadCheck");
-            // SpriteRenderer playerSR = player.GetComponent<SpriteRenderer>();
-            // playerSR.sprite = Sprite.Create(playerTexture, new Rect(0, 0, playerTexture.width, playerTexture.height), new Vector2(0.5f, 0.5f));
-            // Vector2 startPosition = new Vector2(-10.0f, -3.0f);
-            // player.transform.position = startPosition;
-            // player.AddComponent<PolygonCollider2D>();
-            // player.AddComponent<Rigidbody2D>();
-            // player.GetComponent<Rigidbody2D>().constraints = RigidbodyConstraints2D.FreezeRotation;
-            // player.AddComponent<Player>();
-            // // New Spriteプレハブを元に、インスタンスを生成、
-            // // player = (GameObject)Instantiate(player, new Vector3(0.0f, 4.0f, 0.0f), Quaternion.identity);
-            // groundCheck = (GameObject)Instantiate(groundCheck, player.transform.position, Quaternion.identity);
-            // headCheck = (GameObject)Instantiate(headCheck, player.transform.position, Quaternion.identity);
-            // groundCheck.transform.parent = player.transform;
-            // headCheck.transform.parent = player.transform;
-            // player.GetComponent<Player>().ground = groundCheck.GetComponent<GroundCheck>();
-            // player.GetComponent<Player>().head = headCheck.GetComponent<GroundCheck>();
-            // player.GetComponent<Player>().head.checkPlatformGround = false;
-
-            //return Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), Vector2.zero);
-
-            //敵キャラクターを作成
-            // GameObject enemy = (GameObject)Resources.Load("Enemy");
-            // GameObject enemyColCheck = (GameObject)Resources.Load("enemyCollisionCheck");
-            // enemy = (GameObject)Instantiate(enemy, new Vector3(-5.0f,-3.0f,0.0f), Quaternion.identity);
-            // enemyColCheck = (GameObject)Instantiate(enemyColCheck, enemy.transform.position, Quaternion.identity);
-            // enemyColCheck.transform.parent = enemy.transform;
-            // Debug.Log(enemy.GetComponent<Enemy_Zako>().checkCollision);
-            // enemy.GetComponent<Enemy_Zako>().checkCollision = enemyColCheck.GetComponent<EnemyCollisionCheck>();
-            // Debug.Log(enemy.GetComponent<Enemy_Zako>().checkCollision);
-            // enemy.AddComponent<SpriteRenderer>();
-            // SpriteRenderer enemySR = enemy.GetComponent<SpriteRenderer>();
-            // enemySR.sprite = Sprite.Create(objectTexture, new Rect(0, 0, objectTexture.width, objectTexture.height), new Vector2(0.5f, 0.5f));
-            // enemy.AddComponent<PolygonCollider2D>();
-            // enemy.GetComponent<Rigidbody2D>().constraints = RigidbodyConstraints2D.FreezeRotation;
         }
     }
     
     private void CreateSprite(GameObject go, ObjectPositionJson objPos, GameJson game)
     {
+        // objPosに紐づけられたobj, posインスタンスを取得する
         ObjectJson obj = game.objects[objPos.objectId];
         PositionJson pos = game.positions[objPos.positionId];
-        go.AddComponent<SpriteRenderer>();
+        // 画像からテクスチャを生成し、SpriteRendererに登録する
         Texture2D texture = CreateTextureFromBytes(Convert.FromBase64String(obj.image));
+        go.AddComponent<SpriteRenderer>();
         go.GetComponent<SpriteRenderer>().sprite = Sprite.Create(texture, 
                                                                  new Rect(0.0f, 0.0f, pos.width, pos.height), 
                                                                  new Vector2(0.5f, 0.5f));
+        // Colliderを設定する
         go.AddComponent<PolygonCollider2D>();
-        go.transform.position = new Vector2((float)(pos.x + pos.width / 2)/100, (float)(pos.y + pos.width / 2)/100);
+        // オブジェクトの初期位置を設定する
+        //  pixel単位のheightをそのまま使うと大きすぎるので、100分の一にする
+        go.transform.position = new Vector2((float)(pos.x + pos.width / 2)/100, (float)(game.stage.height - pos.y - pos.height / 2)/100);
     }
 
     private Texture2D CreateTextureFromBytes(byte[] bytes)
@@ -227,6 +203,7 @@ public class ObjectJson
     public string image;
     public bool isObject;
     public bool isPlayer;
+    public bool isEnemy;
 }
 
 [Serializable]

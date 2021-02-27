@@ -23,7 +23,7 @@ public class Player : MonoBehaviour
     static Keyframe jEndKeyframe = new Keyframe(1.3f, 0.5f);
     [Header("ダッシュの速さ表現")] public AnimationCurve dashCurve = new AnimationCurve(dStartKeyframe, dEndKeyframe);
     [Header("ジャンプの速さ表現")] public AnimationCurve jumpCurve = new AnimationCurve(jStartKeyframe, jEndKeyframe);
-    [Header("踏みつけ判定の高さの割合(%)")] public float stepOnRate = 2;
+    [Header("踏みつけ判定の高さの割合(%)")] public float stepOnRate = 100;
 
     // TODO:Animatorを設定
     //private Animator anim = null;
