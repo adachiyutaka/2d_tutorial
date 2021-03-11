@@ -28,7 +28,7 @@ public class ImageImport :  MonoBehaviour
         WWWForm form = new WWWForm();
         string id = jstest.URI;
         //string url = $"http://localhost:3000/games/{id}/image/";
-        string url = "http://localhost:3000/games/31/image/";
+        string url = "http://localhost:3000/games/46/image/";
         UnityWebRequest request = UnityWebRequest.Get(url);
         request.SetRequestHeader("Content-Type", "application/json");
         //画像を取得できるまで待つ
@@ -45,8 +45,9 @@ public class ImageImport :  MonoBehaviour
             // CreateSpriteFromBytes(results);
             string jsonText = request.downloadHandler.text;
             GameJson game = JsonUtility.FromJson<GameJson>(jsonText);
-            Debug.Log("yield");
 
+            // デバッグ用 imageアクションから送られてきたデータを一括表示
+            Debug.Log("yield");
             Debug.Log($"stage.width: {game.stage.width}, stage.height{game.stage.height}");
 
             foreach (var obj in game.objects)
@@ -64,16 +65,18 @@ public class ImageImport :  MonoBehaviour
             {
                 Debug.Log($"objectId:{objectPosition.objectId}, positionId:{objectPosition.positionId}");
             }
-
+            // デバッグ用
 
             foreach (var objPos in game.objectPositions)
             {
                 // objectPositionに紐付いたobjectとpositionを参照
                 ObjectJson obj = game.objects[objPos.objectId];
                 PositionJson pos = game.positions[objPos.positionId];
+
                 // GameObjectに役割を与える
                 if (obj.isObject)
                 {
+                    // Objectの場合
                     // GameObjectを作成し、スプライトを登録
                     GameObject go = new GameObject();
                     CreateSprite(go, objPos, game);
@@ -82,6 +85,7 @@ public class ImageImport :  MonoBehaviour
                 }
                 else if (obj.isPlayer)
                 {
+                    // Playerの場合
                     // プレイヤー、接地判定のGameObjectを作成し、スプライトを登録
                     GameObject player = GameObject.Find("Player");
                     GameObject groundCheck = (GameObject)Resources.Load("GroundCheck");
@@ -110,6 +114,7 @@ public class ImageImport :  MonoBehaviour
                     player.GetComponent<Player>().head = headCheck.GetComponent<GroundCheck>();
                     player.GetComponent<Player>().head.checkPlatformGround = false;
                 } else if (obj.isEnemy){
+                    // Enemyの場合
                     // 敵キャラクター、接触判定のGameObjectを作成し、スプライトを登録
                     GameObject enemy = new GameObject();
                     GameObject enemyColCheck = (GameObject)Resources.Load("enemyCollisionCheck");
@@ -133,6 +138,30 @@ public class ImageImport :  MonoBehaviour
                     enemy.GetComponent<Enemy_Zako>().checkCollision = enemyColCheck.GetComponent<EnemyCollisionCheck>();
                     // タグを設定する
                     enemy.tag = "Enemy";
+                } else if (obj.isItem){
+                    // Itemの場合
+                    // GameObjectを作成し、スプライトを登録
+                    GameObject item = new GameObject();
+                    CreateSprite(item, objPos, game);
+                    item.AddComponent<ScoreItem>();
+                    item.GetComponent<ScoreItem>().myScore = 10;
+                    item.AddComponent<PlayerTriggerCheck>();
+                    item.GetComponent<ScoreItem>().playerCheck = item.GetComponent<PlayerTriggerCheck>();
+                    item.GetComponent<PolygonCollider2D>().isTrigger = true;
+                    // タグに"Item"を指定
+                    item.tag = "Item";
+                } else if (obj.isGoal){
+                    // Goalの場合
+                    // GameObjectを作成し、スプライトを登録
+                    GameObject goal = new GameObject();
+                    CreateSprite(goal, objPos, game);
+                    goal.AddComponent<PlayerTriggerCheck>();
+                    // TODO: ゴール演出を表示するGOを作成し、その表示トリガーにgoalのPlayerTriggerCheckを使用する
+
+
+                    goal.GetComponent<PolygonCollider2D>().isTrigger = true;
+                    // タグに"Goal"を指定
+                    goal.tag = "Goal";
                 }
             }
         }
@@ -204,6 +233,8 @@ public class ObjectJson
     public bool isObject;
     public bool isPlayer;
     public bool isEnemy;
+    public bool isItem;
+    public bool isGoal;
 }
 
 [Serializable]

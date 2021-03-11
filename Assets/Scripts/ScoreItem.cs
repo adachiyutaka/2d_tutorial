@@ -12,6 +12,9 @@ public class ScoreItem : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        // アイテムを回転させる（Y軸中心）
+        transform.Rotate(0f, 1.0f, 0f);
+
         if(playerCheck.isOn)
         {
             if(GManager.instance != null)
