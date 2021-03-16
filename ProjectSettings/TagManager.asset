@@ -9,6 +9,8 @@ TagManager:
   - GroundPlatform
   - MoveFloor
   - HitArea
+  - Item
+  - Goal
   layers:
   - Default
   - TransparentFX

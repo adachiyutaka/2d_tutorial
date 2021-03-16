@@ -10,6 +10,7 @@ public class GManager : MonoBehaviour
     public int life;
     public int stageNum;
     public int continueNum;
+    [HideInInspector] public bool isImported = false;
     [HideInInspector] public bool isGameOver = false;
     [HideInInspector] public bool isStageClear = false;
     private AudioSource audioSource = null;
@@ -54,6 +55,8 @@ public class GManager : MonoBehaviour
 
     public void RetryGame()
     {
+        isImported = false;
+        isStageClear = false;
         isGameOver = false;
         life = defaultLife;
         score = 0;

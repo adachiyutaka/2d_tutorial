@@ -23,24 +23,39 @@ public class StageCtrl : MonoBehaviour
     private bool retryGame = false;
     private bool doSceneChange = false;
     private bool doClear = false;
+    private bool isInitialized = false;
 
     // Start is called before the first frame update
-    void Start()
-    {
-        if(playerGO != null && continuePoint != null && continuePoint.Length > 0 && gameOverObj != null && fade != null)
-        {
-            playerGO.transform.position = continuePoint[0].transform.position;
-            gameOverObj.SetActive(false);
-        }
-        else
-        {
-            Debug.Log("必要な項目が設定されていません。");
-        }
-    }
+    // void Start()
+    // {
+    //     if(playerGO != null && continuePoint != null && continuePoint.Length > 0 && gameOverObj != null && stageClearObj != null && fade != null)
+    //     {
+    //         Debug.Log("StageCtrl");
+    //         playerGO.transform.position = continuePoint[0].transform.position;
+    //         gameOverObj.SetActive(false);
+    //         stageClearObj.SetActive(false);
+    //     }
+    //     else
+    //     {
+    //         Debug.Log("必要な項目が設定されていません。");
+    //     }
+    // }
 
     // Update is called once per frame
     void Update()
     {
+        if(playerGO != null && continuePoint != null && continuePoint.Length > 0 && gameOverObj != null && stageClearObj != null && fade != null && GManager.instance.isImported && !isInitialized)
+        {
+            playerGO.transform.position = continuePoint[0].transform.position;
+            gameOverObj.SetActive(false);
+            stageClearObj.SetActive(false);
+            isInitialized = true;
+        }
+        else if (!isInitialized)
+        {
+            Debug.Log("必要な項目が設定されていません。");
+        }
+
         p = playerGO.GetComponent<Player>();
 
         // ゲームオーバー時の処理
@@ -89,6 +104,7 @@ public class StageCtrl : MonoBehaviour
     public void Retry()
     {
         GManager.instance.PlaySE(retrySE);
+        isInitialized = false;
         ChangeScene(1);
         retryGame = true;
     }

@@ -11,10 +11,12 @@ using System;
 public class ImageImport :  MonoBehaviour
 {
     public JsTest jstest;
+    public GameObject stageCtrl;
 
     //[SerializeField] private RawImage _image;
     void Start()
     {
+        stageCtrl = GameObject.Find("StageCtrl");
         StartCoroutine(GetImage());
     }
 
@@ -28,7 +30,7 @@ public class ImageImport :  MonoBehaviour
         WWWForm form = new WWWForm();
         string id = jstest.URI;
         //string url = $"http://localhost:3000/games/{id}/image/";
-        string url = "http://localhost:3000/games/46/image/";
+        string url = "http://localhost:3000/games/47/image/";
         UnityWebRequest request = UnityWebRequest.Get(url);
         request.SetRequestHeader("Content-Type", "application/json");
         //画像を取得できるまで待つ
@@ -86,6 +88,10 @@ public class ImageImport :  MonoBehaviour
                 else if (obj.isPlayer)
                 {
                     // Playerの場合
+                    // スタート位置をStageCtrlに登録する
+                    GameObject startPoint = new GameObject("StartPoint");
+                    startPoint.transform.position = new Vector2((float)(pos.x + pos.width / 2)/100, (float)(game.stage.height - pos.y - pos.height / 2)/100);
+                    stageCtrl.GetComponent<StageCtrl>().continuePoint[0] = startPoint;
                     // プレイヤー、接地判定のGameObjectを作成し、スプライトを登録
                     GameObject player = GameObject.Find("Player");
                     GameObject groundCheck = (GameObject)Resources.Load("GroundCheck");
@@ -156,14 +162,14 @@ public class ImageImport :  MonoBehaviour
                     GameObject goal = new GameObject();
                     CreateSprite(goal, objPos, game);
                     goal.AddComponent<PlayerTriggerCheck>();
-                    // TODO: ゴール演出を表示するGOを作成し、その表示トリガーにgoalのPlayerTriggerCheckを使用する
-
-
                     goal.GetComponent<PolygonCollider2D>().isTrigger = true;
+                    // StageCtrlのステージクリアトリガーにgoalのPlayerTriggerCheckを使用する
+                    stageCtrl.GetComponent<StageCtrl>().stageClearTrigger = goal.GetComponent<PlayerTriggerCheck>();
                     // タグに"Goal"を指定
                     goal.tag = "Goal";
                 }
             }
+        GManager.instance.isImported = true;
         }
     }
     
@@ -175,7 +181,11 @@ public class ImageImport :  MonoBehaviour
         // 画像からテクスチャを生成し、SpriteRendererに登録する
         Texture2D texture = CreateTextureFromBytes(Convert.FromBase64String(obj.image));
         go.AddComponent<SpriteRenderer>();
-        go.GetComponent<SpriteRenderer>().sprite = Sprite.Create(texture, 
+        // go.GetComponent<SpriteRenderer>().sprite = Sprite.Create(texture, 
+        //                                                     new Rect(0.0f, 0.0f, pos.width, pos.height), 
+        //                                                     new Vector2(0.5f, 0.5f));
+        Texture2D resizedTexture = ResizeTexture(texture, pos.width, pos.height);
+        go.GetComponent<SpriteRenderer>().sprite = Sprite.Create(resizedTexture, 
                                                                  new Rect(0.0f, 0.0f, pos.width, pos.height), 
                                                                  new Vector2(0.5f, 0.5f));
         // Colliderを設定する
@@ -206,6 +216,24 @@ public class ImageImport :  MonoBehaviour
         texture.LoadImage(bytes);
 
         return texture;
+    }
+
+    private Texture2D ResizeTexture(Texture2D texture, int width, int height)
+    {
+        // リサイズ後のサイズを持つRenderTextureを作成して書き込む
+        var rt = RenderTexture.GetTemporary(width, height);
+        Graphics.Blit(texture, rt);
+
+        // リサイズ後のサイズを持つTexture2Dを作成してRenderTextureから書き込む
+        var preRT = RenderTexture.active;
+        RenderTexture.active = rt;
+        var ret = new Texture2D(width, height);
+        ret.ReadPixels(new Rect(0, 0, width, height), 0, 0);
+        ret.Apply();
+        RenderTexture.active = preRT;
+
+        RenderTexture.ReleaseTemporary(rt);
+        return ret;
     }
 }
 

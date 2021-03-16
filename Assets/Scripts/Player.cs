@@ -23,7 +23,7 @@ public class Player : MonoBehaviour
     static Keyframe jEndKeyframe = new Keyframe(1.3f, 0.5f);
     [Header("ダッシュの速さ表現")] public AnimationCurve dashCurve = new AnimationCurve(dStartKeyframe, dEndKeyframe);
     [Header("ジャンプの速さ表現")] public AnimationCurve jumpCurve = new AnimationCurve(jStartKeyframe, jEndKeyframe);
-    [Header("踏みつけ判定の高さの割合(%)")] public float stepOnRate = 100;
+    [Header("踏みつけ判定の高さの割合(%)")] public float stepOnRate = 10;
 
     // TODO:Animatorを設定
     //private Animator anim = null;
@@ -68,8 +68,18 @@ public class Player : MonoBehaviour
     // Update is called once per frame
     void FixedUpdate()
     {
-        // ダウン、ゲームオーバーではない場合
-        if (!isDown && !GManager.instance.isGameOver)
+        // ダウンしている場合
+        if (isDown && GManager.instance.isGameOver)
+        {
+            rb.velocity = new Vector2(0, -gravity);
+        }
+        // ゲームクリアーの場合
+        else if(GManager.instance.isStageClear)
+        {
+            rb.velocity = new Vector2(0, -gravity);
+        }
+        // 操作を受け付けている状態
+        else
         {
             //接地判定を得る
             isGround = ground.IsGround();
@@ -86,16 +96,6 @@ public class Player : MonoBehaviour
                 addVelocity = moveObj.GetVelocity();
             }
             rb.velocity = new Vector2(xSpeed, ySpeed) + addVelocity;
-        }
-        // ゲームクリアーの場合
-        else if(!isClearMotion && GManager.instance.isStageClear)
-        {
-            isClearMotion = true;
-        }
-        // ダウンしている場合
-        else
-        {   
-            rb.velocity = new Vector2(0, -gravity);
         }
 
         SetAnimation();
@@ -143,7 +143,7 @@ public class Player : MonoBehaviour
     private float GetYSpeed()
     {
         float verticalKey = Input.GetAxis("Vertical");
-        float ySpeed = -gravity;
+        float ySpeed = -gravity;　
 
         //通常のジャンプ
         if (isGround)
@@ -268,9 +268,10 @@ public class Player : MonoBehaviour
     // }
     private void SetAnimation()
     {
+        Vector3 localAngle = transform.localEulerAngles;
         if(isDown)
-        {
-            polycol2d.enabled = false;
+        {   
+            if(localAngle.z < 90.0f)
             transform.Rotate(new Vector3(0, 0, 5));
         }
     }
@@ -381,6 +382,7 @@ public class Player : MonoBehaviour
         }
         return false;
     }
+
     public void ContinuePlayer()
     {
         GManager.instance.PlaySE(continueSE);
