@@ -14,6 +14,8 @@ public class Player : MonoBehaviour
     [Header("ジャンプのSE")] public AudioClip jumpSE;
     [Header("やられたときのSE")] public AudioClip downSE;
     [Header("コンティニューのSE")] public AudioClip continueSE;
+    [Header("横幅")] public float width;
+    [Header("高さ")] public float height;
 
     //  TODO:もっと綺麗な形に変更
 
@@ -50,7 +52,7 @@ public class Player : MonoBehaviour
     private bool isContinue = false; 
     private float continueTime = 0.0f;
     private float blinkTime = 0.0f; 
-    private SpriteRenderer sr = null;
+    private SpriteRenderer spriteRenderer = null;
 
     // private Animator anim = null; 
 
@@ -61,7 +63,7 @@ public class Player : MonoBehaviour
         //anim = GetComponent<Animator>();
         rb = GetComponent<Rigidbody2D>();
         polycol2d = GetComponent<PolygonCollider2D>();
-        sr = GetComponent<SpriteRenderer>();
+        spriteRenderer = GetComponent<SpriteRenderer>();
         // anim = GetComponent<Animator>();            rb.velocity = new Vector2 (0.0f, 7.0f);
     }
 
@@ -143,7 +145,7 @@ public class Player : MonoBehaviour
     private float GetYSpeed()
     {
         float verticalKey = Input.GetAxis("Vertical");
-        float ySpeed = -gravity;　
+        float ySpeed = -gravity;
 
         //通常のジャンプ
         if (isGround)
@@ -230,18 +232,18 @@ public class Player : MonoBehaviour
             //明滅 ついている時に戻る
             if(blinkTime > 0.2f)
             {
-                sr.enabled = true;
+                spriteRenderer.enabled = true;
                 blinkTime = 0.0f;
             }
             //明滅 消えているとき
             else if (blinkTime > 0.1f)
             {
-                sr.enabled = false;
+                spriteRenderer.enabled = false;
             }
             //明滅 ついているとき
             else
             {
-                sr.enabled = true;
+                spriteRenderer.enabled = true;
             }
 
             //1秒たったら明滅終わり
@@ -250,7 +252,7 @@ public class Player : MonoBehaviour
                 isContinue = false;
                 blinkTime = 0f;
                 continueTime = 0f;
-                sr.enabled = true;
+                spriteRenderer.enabled = true;
             }
             else
             {
@@ -282,16 +284,10 @@ public class Player : MonoBehaviour
         if (collision.collider.tag == enemyTag)
         {
             //踏みつけ判定になる高さ
-            //float stepOnHeight = (capcol.size.y * (stepOnRate / 100f));
-
-            // TODO:capcol.sizeの代わりになるものを探す
-            float stepOnHeight = (1 * (stepOnRate / 100f));
+            float stepOnHeight = (height * (stepOnRate / 100f));
 
             //踏みつけ判定のワールド座標
-            //float judgePos = transform.position.y - (capcol.size.y / 2f) + stepOnHeight;
-
-            // TODO:capcol.sizeの代わりになるものを探す
-            float judgePos = transform.position.y - (1 / 2f) + stepOnHeight;
+            float judgePos = transform.position.y - (height / 2f) + stepOnHeight;
 
             foreach (ContactPoint2D p in collision.contacts)
             {
@@ -336,6 +332,7 @@ public class Player : MonoBehaviour
             }
         }
     }
+
     private void OnCollisionExit2D(Collision2D collision)
     {
         if (collision.collider.tag == moveFloorTag)

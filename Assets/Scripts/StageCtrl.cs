@@ -43,7 +43,7 @@ public class StageCtrl : MonoBehaviour
 
     // Update is called once per frame
     void Update()
-    {
+    {   
         if(playerGO != null && continuePoint != null && continuePoint.Length > 0 && gameOverObj != null && stageClearObj != null && fade != null && GManager.instance.isImported && !isInitialized)
         {
             playerGO.transform.position = continuePoint[0].transform.position;
@@ -53,6 +53,7 @@ public class StageCtrl : MonoBehaviour
         }
         else if (!isInitialized)
         {
+            Debug.Log($"GManager.instance.isImported: {GManager.instance.isImported}");
             Debug.Log("必要な項目が設定されていません。");
         }
 

@@ -1,2 +1,4 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+Library/il2cpp_cache/linkresult_1374EE1D2DE08EF75BC73D80234AF49C/build.bc filter=lfs diff=lfs merge=lfs -text
+Assets/Font/ZenjidoJP-FeltPenLMT-TTF[[:space:]]SDF.asset filter=lfs diff=lfs merge=lfs -text

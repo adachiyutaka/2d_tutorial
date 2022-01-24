@@ -12,7 +12,7 @@ public class ImageImport :  MonoBehaviour
 {
     public JsTest jstest;
     public GameObject stageCtrl;
-
+    private  Dictionary<string, int> role;
     //[SerializeField] private RawImage _image;
     void Start()
     {
@@ -27,10 +27,18 @@ public class ImageImport :  MonoBehaviour
 
     IEnumerator GetImage()
     {
+        role = new Dictionary<string, int>(){
+            {"stage", 1},
+            {"player", 2},
+            {"enemy", 3},
+            {"item", 4},
+            {"goal", 5},
+        };
+
         WWWForm form = new WWWForm();
-        string id = jstest.URI;
-        //string url = $"http://localhost:3000/games/{id}/image/";
-        string url = "http://localhost:3000/games/47/image/";
+        // string id = jstest.URI;
+        //string url = $"http://localhost:3000/games/{id}/unity/";
+        string url = "http://localhost:3000/games/4/unity/";
         UnityWebRequest request = UnityWebRequest.Get(url);
         request.SetRequestHeader("Content-Type", "application/json");
         //画像を取得できるまで待つ
@@ -45,10 +53,11 @@ public class ImageImport :  MonoBehaviour
             //取得した画像のテクスチャ
             // byte[] results = request.downloadHandler.data;
             // CreateSpriteFromBytes(results);
-            string jsonText = request.downloadHandler.text;
-            GameJson game = JsonUtility.FromJson<GameJson>(jsonText);
+            string jsonStr = request.downloadHandler.text;
+            // GameJson game = JsonUtility.FromJson<GameJson>(jsonStr);
+            GameJson game = JsonUtility.FromJson<GameJson>(jsonStr);
 
-            // デバッグ用 imageアクションから送られてきたデータを一括表示
+            // デバッグ用 unityアクションから送られてきたデータを一括表示
             Debug.Log("yield");
             Debug.Log($"stage.width: {game.stage.width}, stage.height{game.stage.height}");
 
@@ -56,7 +65,7 @@ public class ImageImport :  MonoBehaviour
             {
                 Debug.Log($"symbol:{obj.symbol}");
                 Debug.Log($"image:{obj.image}");
-                Debug.Log($"isObject:{obj.isObject}, isPlayer:{obj.isPlayer}, isEnemy:{obj.isEnemy}");
+                Debug.Log($"role:{obj.role}");
             }
             foreach (var position in game.positions)
             {
@@ -76,8 +85,9 @@ public class ImageImport :  MonoBehaviour
                 PositionJson pos = game.positions[objPos.positionId];
 
                 // GameObjectに役割を与える
-                if (obj.isObject)
+                if (obj.role == role["stage"])
                 {
+                    Debug.Log("stage");
                     // Objectの場合
                     // GameObjectを作成し、スプライトを登録
                     GameObject go = new GameObject();
@@ -85,17 +95,19 @@ public class ImageImport :  MonoBehaviour
                     // タグに"Ground"を指定
                     go.tag = "Ground";
                 }
-                else if (obj.isPlayer)
+                else if (obj.role == role["player"])
                 {
+                    Debug.Log("player");
                     // Playerの場合
                     // スタート位置をStageCtrlに登録する
                     GameObject startPoint = new GameObject("StartPoint");
                     startPoint.transform.position = new Vector2((float)(pos.x + pos.width / 2)/100, (float)(game.stage.height - pos.y - pos.height / 2)/100);
                     stageCtrl.GetComponent<StageCtrl>().continuePoint[0] = startPoint;
-                    // プレイヤー、接地判定のGameObjectを作成し、スプライトを登録
+                    // プレイヤー、接地判定のGameObjectを作成
                     GameObject player = GameObject.Find("Player");
                     GameObject groundCheck = (GameObject)Resources.Load("GroundCheck");
                     GameObject headCheck = (GameObject)Resources.Load("HeadCheck");
+                    // スプライトを登録
                     CreateSprite(player, objPos, game);
                     // Playerスクリプトを設定
                     player.AddComponent<Player>();
@@ -103,7 +115,7 @@ public class ImageImport :  MonoBehaviour
                     player.AddComponent<Rigidbody2D>();
                     player.GetComponent<Rigidbody2D>().constraints = RigidbodyConstraints2D.FreezeRotation;
                     // 足元と頭の接地判定を設定
-                    //  pixel単位のheightをそのまま使うと大きすぎるので、100分の一にする
+                    //  相対位置を指定、pixel単位のheightをそのまま使うと大きすぎるので、100分の一にする
                     Vector3 playerPos = player.transform.position;
                     Vector3 groundPos = new Vector3(playerPos.x, playerPos.y - (float)pos.height/200, playerPos.z);
                     Vector3 headPos = new Vector3(playerPos.x, playerPos.y + (float)pos.height/200, playerPos.z);
@@ -116,10 +128,13 @@ public class ImageImport :  MonoBehaviour
                     groundCheck.transform.parent = player.transform;
                     headCheck.transform.parent = player.transform;
                     //  プレイヤーのコンポーネントに設定する
-                    player.GetComponent<Player>().ground = groundCheck.GetComponent<GroundCheck>();
-                    player.GetComponent<Player>().head = headCheck.GetComponent<GroundCheck>();
-                    player.GetComponent<Player>().head.checkPlatformGround = false;
-                } else if (obj.isEnemy){
+                    Player playerScript = player.GetComponent<Player>();
+                    playerScript.ground = groundCheck.GetComponent<GroundCheck>();
+                    playerScript.head = headCheck.GetComponent<GroundCheck>();
+                    playerScript.head.checkPlatformGround = false;
+                    playerScript.width = pos.width / 100;
+                    playerScript.height = pos.height / 100;
+                } else if (obj.role == role["enemy"]){
                     // Enemyの場合
                     // 敵キャラクター、接触判定のGameObjectを作成し、スプライトを登録
                     GameObject enemy = new GameObject();
@@ -144,7 +159,7 @@ public class ImageImport :  MonoBehaviour
                     enemy.GetComponent<Enemy_Zako>().checkCollision = enemyColCheck.GetComponent<EnemyCollisionCheck>();
                     // タグを設定する
                     enemy.tag = "Enemy";
-                } else if (obj.isItem){
+                } else if (obj.role == role["item"]){
                     // Itemの場合
                     // GameObjectを作成し、スプライトを登録
                     GameObject item = new GameObject();
@@ -156,7 +171,7 @@ public class ImageImport :  MonoBehaviour
                     item.GetComponent<PolygonCollider2D>().isTrigger = true;
                     // タグに"Item"を指定
                     item.tag = "Item";
-                } else if (obj.isGoal){
+                } else if (obj.role == role["goal"]){
                     // Goalの場合
                     // GameObjectを作成し、スプライトを登録
                     GameObject goal = new GameObject();
@@ -258,11 +273,7 @@ public class ObjectJson
 {
     public string symbol;
     public string image;
-    public bool isObject;
-    public bool isPlayer;
-    public bool isEnemy;
-    public bool isItem;
-    public bool isGoal;
+    public int role;
 }
 
 [Serializable]
