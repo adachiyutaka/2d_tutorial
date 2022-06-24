@@ -8,6 +8,7 @@ using System.Text;
 using System;
 using Unity.Collections;
 using System.Linq;
+using LitJson;
 
 
 public class ImageImport :  MonoBehaviour
@@ -58,20 +59,21 @@ public class ImageImport :  MonoBehaviour
             string jsonStr = request.downloadHandler.text;
             // GameJson game = JsonUtility.FromJson<GameJson>(jsonStr);
             GameJson game = JsonUtility.FromJson<GameJson>(jsonStr);
+            GameJson gameData = JsonMapper.ToObject<GameJson>(jsonStr);
 
             // デバッグ用 unityアクションから送られてきたデータを一括表示
             Debug.Log("yield");
             Debug.Log($"jsonStr {jsonStr}");
-            Debug.Log($"stage.width: {game.stage.width}, stage.height{game.stage.height}");
+            // Debug.Log($"stage.width: {game.stage.width}, stage.height{game.stage.height}");
+            Debug.Log($"gameData {gameData.objects[0].role}");
 
-            foreach (var obj in game.objects)
+            foreach (var obj in gameData.objects)
             {
-                string a = "a";
                 var meshData = obj.meshData;
+                Debug.Log($"meshData.triangles[0]:{obj.meshData.triangles[0]}");
                 Debug.Log($"symbol:{obj.symbol}");
                 Debug.Log($"image:{obj.image}");
                 Debug.Log($"role:{obj.role}");
-                Debug.Log($"meshData:{obj.meshData}");
                 Debug.Log($"meshData:{meshData}");
                 Debug.Log($"meshData.triangles[0]:{obj.meshData.triangles[0]}");
 
@@ -82,6 +84,21 @@ public class ImageImport :  MonoBehaviour
                 foreach(var triangle in meshData.triangles)
                 {
                     Debug.Log($"triangle:{triangle}");
+                }
+                Debug.Log($"boneNames-------------");
+                Debug.Log($"boneNamesOnVertices GetType() {meshData.boneNamesOnVertices}");
+
+                Debug.Log($"boneName [0][0] {meshData.boneNamesOnVertices[0][0]}");
+
+                foreach(var boneNames in meshData.boneNamesOnVertices)
+                {
+                    Debug.Log($"boneNames:{boneNames[0]}");
+                    string boneNamesString = "";
+                    foreach(var boneName in boneNames)
+                    {
+                        boneNamesString += $"{boneName}, ";
+                    }
+                    Debug.Log($"triangle:{boneNamesString}");
                 }
                 
             }
@@ -131,18 +148,19 @@ public class ImageImport :  MonoBehaviour
                     // Meshを作成して登録
 
                     // プレハブを元にオブジェクトを生成する
+                    
                     GameObject player = (GameObject)Instantiate((GameObject)Resources.Load("Body"), new Vector3(0.0f, 0.0f, 0.0f), Quaternion.identity);
                     GameObject genericMan = player.transform.GetChild(0).Find("Generic Man").gameObject;
                     player.AddComponent<SkinnedMeshRenderer>();
                     SkinnedMeshRenderer rend = player.GetComponent<SkinnedMeshRenderer>();
 
-                    CreateHumanMesh(rend, genericMan);
+                    CreateHumanMesh(rend, genericMan, obj.meshData, pos);
 
                     // Playerスクリプトを設定
                     player.AddComponent<Player>();
                     // Rigidbody2D、回転の無効化を設定
-                    // player.AddComponent<Rigidbody2D>();
-                    // player.GetComponent<Rigidbody2D>().constraints = RigidbodyConstraints2D.FreezeRotation;
+                    player.AddComponent<Rigidbody2D>();
+                    player.GetComponent<Rigidbody2D>().constraints = RigidbodyConstraints2D.FreezeRotation;
                     // 足元と頭の接地判定を設定
                     //  相対位置を指定、pixel単位のheightをそのまま使うと大きすぎるので、100分の一にする
                     Vector3 playerPos = player.transform.position;
@@ -280,11 +298,20 @@ public class ImageImport :  MonoBehaviour
         return ret;
     }
 
-    private void CreateHumanMesh(SkinnedMeshRenderer rend, GameObject humanBones){
+    private void CreateHumanMesh(SkinnedMeshRenderer rend, GameObject humanBones, MeshJson meshData, PositionJson pos){
         var mesh = new Mesh();
         var bonesPerVertex = new List<byte>();
         var weights = new List<BoneWeight1>();
         int size = 15;
+        var boneNamesOnVertices = meshData.boneNamesOnVertices;
+        var triangles = meshData.triangles;
+        var vertices = meshData.vertices;
+
+        // // Mesh作成に必要な情報（頂点、三角形の順番、座標とボーン名の対応）を作成
+        // var vertices = new List<Vector3>();
+        // var triangles = new List<int>();
+        // var boneNamesOnVertices = new Dictionary<Vector3, List<string>>();
+
         // int[] test_i = {1, 2, 3};
         // Debug.Log(test_i.Where(x => x % 2 == 0).Select(x));
 
@@ -372,84 +399,81 @@ public class ImageImport :  MonoBehaviour
             // {"toe.R_end", null}
         };
 
-        // Mesh作成に必要な情報（頂点、三角形の順番、座標とボーン名の対応）を作成
-        var vertices = new List<Vector3>();
-        var triangles = new List<int>();
-        var boneNamesOnVertices = new Dictionary<Vector3, List<string>>();
+        // foreach(Vector2 point in humanPoints){
+        //     // Debug.Log(point_i);
+        //     // 座標を中心に4点の座標を作成
+        //     // Debug.Log(point.x.GetType());
+        //     // int x;
+        //     // int y;
+        //     var x = point.x;
+        //     var y = point.y;
+        //     var sqrVertices = new Vector3[4];
+        //     sqrVertices[0] = new Vector3(x + 1, y, 0);
+        //     sqrVertices[1] = new Vector3(x, y, 0);
+        //     sqrVertices[2] = new Vector3(x + 1, y + 1, 0);
+        //     sqrVertices[3] = new Vector3(x, y + 1, 0);
 
-        foreach(Vector2 point in humanPoints){
-            // Debug.Log(point_i);
-            // 座標を中心に4点の座標を作成
-            // Debug.Log(point.x.GetType());
-            // int x;
-            // int y;
-            var x = point.x;
-            var y = point.y;
-            var sqrVertices = new Vector3[4];
-            sqrVertices[0] = new Vector3(x + 1, y, 0);
-            sqrVertices[1] = new Vector3(x, y, 0);
-            sqrVertices[2] = new Vector3(x + 1, y + 1, 0);
-            sqrVertices[3] = new Vector3(x, y + 1, 0);
+        //     // 作成した4点とvertices（頂点のリスト）の和集合（同じ値が含まれない）を作成
+        //     vertices = vertices.Union(sqrVertices).ToList();
+        //         Debug.Log($"vertices.Count {vertices.Count}");
+        //     foreach(var vertex in vertices){
+        //         // Debug.Log($"{point_i} x: {vertex[0]}, y: {vertex[1]}, z:{vertex[2]}");
+        //     }
+        //     // verticesにおける4つの頂点のidを取得
+        //     var vertexIndexes = new int[4];
+        //     for(int ver_i = 0; ver_i < sqrVertices.Length; ver_i ++){
+        //         vertexIndexes[ver_i] = vertices.FindIndex(v => v == sqrVertices[ver_i]);
+        //     }
 
-            // 作成した4点とvertices（頂点のリスト）の和集合（同じ値が含まれない）を作成
-            vertices = vertices.Union(sqrVertices).ToList();
-                Debug.Log($"vertices.Count {vertices.Count}");
-            foreach(var vertex in vertices){
-                // Debug.Log($"{point_i} x: {vertex[0]}, y: {vertex[1]}, z:{vertex[2]}");
-            }
-            // verticesにおける4つの頂点のidを取得
-            var vertexIndexes = new int[4];
-            for(int ver_i = 0; ver_i < sqrVertices.Length; ver_i ++){
-                vertexIndexes[ver_i] = vertices.FindIndex(v => v == sqrVertices[ver_i]);
-            }
+        //     // 4頂点をポリゴン化するための三角形の順番を指定（0 -> 1 -> 2, 1 -> 3 -> 2 の二つ）し、
+        //     // triangles（三角形のリスト）に追加（同じ値も含まれる）
+        //     var sqrTriangles = new int[] { vertexIndexes[0], vertexIndexes[1], vertexIndexes[2], vertexIndexes[1], vertexIndexes[3], vertexIndexes[2] };
+        //     triangles.AddRange(sqrTriangles);
 
-            // 4頂点をポリゴン化するための三角形の順番を指定（0 -> 1 -> 2, 1 -> 3 -> 2 の二つ）し、
-            // triangles（三角形のリスト）に追加（同じ値も含まれる）
-            var sqrTriangles = new int[] { vertexIndexes[0], vertexIndexes[1], vertexIndexes[2], vertexIndexes[1], vertexIndexes[3], vertexIndexes[2] };
-            triangles.AddRange(sqrTriangles);
+        //     // 座標に対応するボーン名を取得
+        //     string boneName = boneNamedPoints.FirstOrDefault(bNPoint => bNPoint.Value == point).Key;
 
-            // 座標に対応するボーン名を取得
-            string boneName = boneNamedPoints.FirstOrDefault(bNPoint => bNPoint.Value == point).Key;
+        //     // 座標に対応するボーン名を登録する（keyが座標、valueがボーン名のリスト）
+        //     // 一つの座標に複数のボーン名が登録される場合もある
+        //     foreach(Vector3 sqrVertex in sqrVertices){
+        //         // 該当の座標にすでにボーン名が登録されているか判定
+        //         if(boneNamesOnVertices.ContainsKey(sqrVertex)){
+        //         // キーがある場合（すでに頂点が登録されている場合）
+        //             // 頂点に対応するボーン名のリストに新たなボーン名を追加
+        //             boneNamesOnVertices[sqrVertex].Add(boneName);
+        //         }else{
+        //         // キーがない場合（重複する頂点を持たない場合）
+        //             // 新たに頂点とboneNameのペアを追加
+        //             boneNamesOnVertices.Add(sqrVertex, new List<string>(){boneName});
+        //         }
+        //     }
+        // }
 
-            // 座標に対応するボーン名を登録する（keyが座標、valueがボーン名のリスト）
-            // 一つの座標に複数のボーン名が登録される場合もある
-            foreach(Vector3 sqrVertex in sqrVertices){
-                // 該当の座標にすでにボーン名が登録されているか判定
-                if(boneNamesOnVertices.ContainsKey(sqrVertex)){
-                // キーがある場合（すでに頂点が登録されている場合）
-                    // 頂点に対応するボーン名のリストに新たなボーン名を追加
-                    boneNamesOnVertices[sqrVertex].Add(boneName);
-                }else{
-                // キーがない場合（重複する頂点を持たない場合）
-                    // 新たに頂点とboneNameのペアを追加
-                    boneNamesOnVertices.Add(sqrVertex, new List<string>(){boneName});
-                }
-            }
-        }
-
-        int vBN_i = 0;
-        foreach(var vBN in boneNamesOnVertices){
-            string boneNames = "";
-            foreach(var name in vBN.Value){
-                boneNames += " " + name + ",";
-            }
-            Debug.Log(vBN_i + " / vertex :x" + vBN.Key.x + ", y" + vBN.Key.y + " /" + boneNames);
-            vBN_i ++;
-        }
+        // int vBN_i = 0;
+        // foreach(var vBN in boneNamesOnVertices){
+        //     string boneNames = "";
+        //     foreach(var name in vBN){
+        //         boneNames += " " + name + ",";
+        //     }
+        //     Debug.Log(vBN_i + " / vertex :x" + vBN.Key.x + ", y" + vBN.Key.y + " /" + boneNames);
+        //     vBN_i ++;
+        // }
 
         // メッシュに頂点、三角形の順番を登録し、
         // 法線とバウンディングボリュームを再計算する
-        mesh.vertices = vertices.ToArray();
-        mesh.triangles = triangles.ToArray();
+        // mesh.vertices = vertices.ToArray();
+        // mesh.triangles = triangles.ToArray();
+        mesh.vertices = vertices.Select(point => new Vector3(point.x, point.y, 0)).ToArray();
+        mesh.triangles = triangles;
         mesh.RecalculateNormals();
         mesh.RecalculateBounds();
 
-        Vector2[] uvs = new Vector2[vertices.Count];
+        Vector2[] uvs = new Vector2[vertices.Length];
 
         for (int i = 0; i < uvs.Length; i++)
         {
             Debug.Log($"vertices[i].x {vertices[i].x}, vertices[i].z {vertices[i].y}");
-            uvs[i] = new Vector2(vertices[i].x/6, vertices[i].y/10);
+            uvs[i] = new Vector2(vertices[i].x/pos.width, vertices[i].y/pos.height);
         }
         mesh.uv = uvs;
 
@@ -465,36 +489,42 @@ public class ImageImport :  MonoBehaviour
             Debug.Log(m + " " + name);
             m++;
         }
+        // int i_bNV = 0;
         
         // Mesh作成に必要な情報（各頂点が関連するボーンの数(byte型)、ウェイト）を作成
         // bonesPerVertexは頂点の数と同じ、weighsは頂点数 x 関連するボーンの数の合計の長さ
-        foreach(var boneNamesOnVertex in boneNamesOnVertices){
+        // foreach(var boneNamesOnVertex in boneNamesOnVertices){
+        //     // foreach(var name in boneNamesOnVertex){
+        //     //     Debug.Log($"{i_bNV}: {name}");
+        //     // }
 
-            // 各頂点が関連するボーンの数を作成
-            // 各頂点（Key）が持つBoneNameリスト（Value）
-            List<string> boneNames = boneNamesOnVertex.Value;
-            // BoneNameの数
-            int boneCount = boneNames.Count();
+        //     // 各頂点が関連するボーンの数を作成
+        //     // 各頂点（Key）が持つBoneNameリスト（Value）
+        //     var boneNames = boneNamesOnVertex.ToArray();
+        //     // BoneNameの数
+        //     int boneCount = boneNames;
 
-            // BoneNameの数をbyte型で追加
-            bonesPerVertex.Add(Convert.ToByte(boneCount));
+        //     // BoneNameの数をbyte型で追加
+        //     bonesPerVertex.Add(Convert.ToByte(boneCount));
 
-            // 登録されているボーンの数だけウェイトを作成する
-            foreach(var boneName in boneNames){
-                var weight = new BoneWeight1();
+        //     // 登録されているボーンの数だけウェイトを作成する
+        //     foreach(var boneName in boneNames){
+        //         var weight = new BoneWeight1();
 
-                // ボーン（Humanoid Avatarが適応されるTransform群）のIndexを登録する
-                weight.boneIndex = Array.IndexOf(boneNameIndex, boneName);
+        //         // ボーン（Humanoid Avatarが適応されるTransform群）のIndexを登録する
+        //         weight.boneIndex = Array.IndexOf(boneNameIndex, boneName);
 
-                // 一つの頂点に複数のボーン名が登録されている場合、ウェイトは等分とする
-                weight.weight = 1.0f / boneCount;
+        //         // 一つの頂点に複数のボーン名が登録されている場合、ウェイトは等分とする
+        //         weight.weight = 1.0f / boneCount;
 
-                Debug.Log("boneIndex: " + weight.boneIndex + "boneName: " + boneName + ", weight: " + weight.weight);
+        //         Debug.Log("boneIndex: " + weight.boneIndex + "boneName: " + boneName + ", weight: " + weight.weight);
 
-                // ウェイトのリスト（weights）に追加する
-                weights.Add(weight);
-            }
-        }
+        //         // ウェイトのリスト（weights）に追加する
+        //         weights.Add(weight);
+        //     }
+
+        //     i_bNV ++;
+        // }
 
         // 各頂点が関連するボーンの数(byte型)のリスト、ウェイトのリストをそれぞれNativeArray型に変換する
         var bonesPerVertexArray = new NativeArray<byte>(bonesPerVertex.ToArray(), Allocator.Temp);
@@ -558,24 +588,23 @@ public class ObjectJson
     public string symbol;
     public string image;
     public int role;
-    public meshJson meshData;
+    public MeshJson meshData;
 }
 
 [Serializable]
-public class meshJson
+public class MeshJson
 {
-    public pointJson[] vertices;
+    public PointJson[] vertices;
     public int[] triangles;
-    public string[,] boneNamesOnVertices;
+    public List<string[]> boneNamesOnVertices;
 }
 
 [Serializable]
-public class pointJson
+public class PointJson
 {
     public int x;
     public int y;
 }
-
 
 [Serializable]
 public class PositionJson
