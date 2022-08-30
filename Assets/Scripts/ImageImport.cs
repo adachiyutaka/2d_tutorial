@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.UI;
@@ -17,6 +18,7 @@ public class ImageImport :  MonoBehaviour
     public GameObject stageCtrl;
     private  Dictionary<string, int> role;
     //[SerializeField] private RawImage _image;
+
     void Start()
     {
         stageCtrl = GameObject.Find("StageCtrl");
@@ -41,7 +43,7 @@ public class ImageImport :  MonoBehaviour
         WWWForm form = new WWWForm();
         // string id = jstest.URI;
         //string url = $"http://localhost:3000/games/{id}/unity/";
-        string url = "http://localhost:3000/games/3/unity/";
+        string url = "http://localhost:3000/games/28/unity/";
         UnityWebRequest request = UnityWebRequest.Get(url);
         request.SetRequestHeader("Content-Type", "application/json");
         //画像を取得できるまで待つ
@@ -58,19 +60,18 @@ public class ImageImport :  MonoBehaviour
             // CreateSpriteFromBytes(results);
             string jsonStr = request.downloadHandler.text;
             // GameJson game = JsonUtility.FromJson<GameJson>(jsonStr);
-            GameJson game = JsonUtility.FromJson<GameJson>(jsonStr);
-            GameJson gameData = JsonMapper.ToObject<GameJson>(jsonStr);
+            // GameJson game = JsonUtility.FromJson<GameJson>(jsonStr);
+            GameJson game = JsonMapper.ToObject<GameJson>(jsonStr);
 
             // デバッグ用 unityアクションから送られてきたデータを一括表示
-            Debug.Log("yield");
-            Debug.Log($"jsonStr {jsonStr}");
-            // Debug.Log($"stage.width: {game.stage.width}, stage.height{game.stage.height}");
-            Debug.Log($"gameData {gameData.objects[0].role}");
+            // Debug.Log("yield");
+            // Debug.Log($"jsonStr {jsonStr}");
+            // // Debug.Log($"stage.width: {game.stage.width}, stage.height{game.stage.height}");
+            // Debug.Log($"gameData {game.objects[0].role}");
 
-            foreach (var obj in gameData.objects)
+            foreach (var obj in game.objects)
             {
                 var meshData = obj.meshData;
-                Debug.Log($"meshData.triangles[0]:{obj.meshData.triangles[0]}");
                 Debug.Log($"symbol:{obj.symbol}");
                 Debug.Log($"image:{obj.image}");
                 Debug.Log($"role:{obj.role}");
@@ -86,31 +87,38 @@ public class ImageImport :  MonoBehaviour
                     Debug.Log($"triangle:{triangle}");
                 }
                 Debug.Log($"boneNames-------------");
-                Debug.Log($"boneNamesOnVertices GetType() {meshData.boneNamesOnVertices}");
 
-                Debug.Log($"boneName [0][0] {meshData.boneNamesOnVertices[0][0]}");
 
-                foreach(var boneNames in meshData.boneNamesOnVertices)
+                foreach(var boneIds in meshData.boneIdOnVertices)
                 {
-                    Debug.Log($"boneNames:{boneNames[0]}");
-                    string boneNamesString = "";
-                    foreach(var boneName in boneNames)
+                    string boneIdString = "";
+                    foreach(var id in boneIds)
                     {
-                        boneNamesString += $"{boneName}, ";
+                        boneIdString += $"{id}, ";
                     }
-                    Debug.Log($"triangle:{boneNamesString}");
+                    Debug.Log($"boneIds:{boneIdString}");
+                }
+
+                foreach(var boneWeights in meshData.boneWeightOnVertices)
+                {
+                    string boneWeightString = "";
+                    foreach(var weight in boneWeights)
+                    {
+                        boneWeightString += $"{weight}, ";
+                    }
+                    Debug.Log($"boneWeights:{boneWeightString}");
                 }
                 
             }
-            foreach (var position in game.positions)
-            {
-                Debug.Log($"symbol:{position.symbol}");
-                Debug.Log($"height:{position.height}, width:{position.width}, x:{position.y}, x:{position.y}");
-            }
-            foreach (var objectPosition in game.objectPositions)
-            {
-                Debug.Log($"objectId:{objectPosition.objectId}, positionId:{objectPosition.positionId}");
-            }
+            // foreach (var position in game.positions)
+            // {
+            //     Debug.Log($"symbol:{position.symbol}");
+            //     Debug.Log($"height:{position.height}, width:{position.width}, x:{position.y}, x:{position.y}");
+            // }
+            // foreach (var objectPosition in game.objectPositions)
+            // {
+            //     Debug.Log($"objectId:{objectPosition.objectId}, positionId:{objectPosition.positionId}");
+            // }
             // デバッグ用
 
             foreach (var objPos in game.objectPositions)
@@ -154,18 +162,33 @@ public class ImageImport :  MonoBehaviour
                     player.AddComponent<SkinnedMeshRenderer>();
                     SkinnedMeshRenderer rend = player.GetComponent<SkinnedMeshRenderer>();
 
-                    CreateHumanMesh(rend, genericMan, obj.meshData, pos);
+                    CreateHumanMesh(rend, genericMan, obj, pos);
+
+                    // AssetDatabase.CreateAsset (rend.material.mainTexture, "Assets/testTexture.asset");
+                    // AssetDatabase.CreateAsset (rend.sharedMesh, "Assets/testMesh.asset");
+                    // PrefabUtility.CreatePrefab ("Assets/testPlayer.prefab", player);
+                    // AssetDatabase.SaveAssets();
 
                     // Playerスクリプトを設定
                     player.AddComponent<Player>();
                     // Rigidbody2D、回転の無効化を設定
                     player.AddComponent<Rigidbody2D>();
                     player.GetComponent<Rigidbody2D>().constraints = RigidbodyConstraints2D.FreezeRotation;
+                    // Capsule Collider を設定
+                    player.AddComponent<CapsuleCollider2D>();
+                    CapsuleCollider2D capsuleCollider2D = player.GetComponent<CapsuleCollider2D>();
+                    player.transform.localScale = new Vector3(0.01f, 0.01f, 0.01f);
+                    capsuleCollider2D.direction = CapsuleDirection2D.Vertical;
+                    capsuleCollider2D.size = new Vector2(pos.width/2, pos.height);
+                    Debug.Log($"pos.height {pos.height}, pos.width {pos.width}, capsuleCollider2D.size {capsuleCollider2D.size}");
                     // 足元と頭の接地判定を設定
                     //  相対位置を指定、pixel単位のheightをそのまま使うと大きすぎるので、100分の一にする
                     Vector3 playerPos = player.transform.position;
-                    Vector3 groundPos = new Vector3(playerPos.x, playerPos.y - (float)pos.height/200, playerPos.z);
-                    Vector3 headPos = new Vector3(playerPos.x, playerPos.y + (float)pos.height/200, playerPos.z);
+                    Vector3 groundPos = new Vector3((float)pos.width/200, 0, 0);
+                    Vector3 headPos = new Vector3((float)pos.width/200, (float)pos.height/100, 0);
+
+                    // Vector3 groundPos = new Vector3(playerPos.x, playerPos.y - (float)pos.height/200, playerPos.z);
+                    // Vector3 headPos = new Vector3(playerPos.x, playerPos.y + (float)pos.height/200, playerPos.z);
                     //  判定用のGameObjectを生成する
                     groundCheck = (GameObject)Instantiate(groundCheck, groundPos, Quaternion.identity);
                     headCheck = (GameObject)Instantiate(headCheck, headPos, Quaternion.identity);
@@ -298,12 +321,15 @@ public class ImageImport :  MonoBehaviour
         return ret;
     }
 
-    private void CreateHumanMesh(SkinnedMeshRenderer rend, GameObject humanBones, MeshJson meshData, PositionJson pos){
+    private void CreateHumanMesh(SkinnedMeshRenderer rend, GameObject humanBones, ObjectJson obj, PositionJson pos){
         var mesh = new Mesh();
         var bonesPerVertex = new List<byte>();
         var weights = new List<BoneWeight1>();
         int size = 15;
-        var boneNamesOnVertices = meshData.boneNamesOnVertices;
+        var meshData = obj.meshData;
+        // var armature = meshData.armature;
+        var boneIdOnVertices = meshData.boneIdOnVertices;
+        var boneWeightOnVertices = meshData.boneWeightOnVertices;
         var triangles = meshData.triangles;
         var vertices = meshData.vertices;
 
@@ -463,7 +489,20 @@ public class ImageImport :  MonoBehaviour
         // 法線とバウンディングボリュームを再計算する
         // mesh.vertices = vertices.ToArray();
         // mesh.triangles = triangles.ToArray();
-        mesh.vertices = vertices.Select(point => new Vector3(point.x, point.y, 0)).ToArray();
+        // y座標はwebのcanvasとunityで異なるので変換する
+        // mesh.vertices = vertices.Select(point => new Vector3(point.x/100, (pos.height - point.y)/100, 0)).ToArray();
+        mesh.vertices = vertices.Select(point => new Vector3(point.x, pos.height - point.y, 0)).ToArray();
+
+        // var testVertices = vertices.Select(point => new Vector3(point.x, pos.height - point.y, 0)).ToArray();
+        
+        // // Debug.Log($"mesh.vertices[0] {mesh.vertices[100]}");
+        // // // mesh.vertices[0] = new Vector3(mesh.vertices[0].x + 100, mesh.vertices[0].y, mesh.vertices[0].z);
+        // // var testVertices = mesh.vertices;
+        // // testVertices[100] = new Vector3(0, 0, 0);
+        // // mesh.vertices[0] = new Vector3(0, 0, 0);
+        // mesh.vertices = testVertices;
+
+        // Debug.Log($"mesh.vertices[0] {mesh.vertices[100]}");
         mesh.triangles = triangles;
         mesh.RecalculateNormals();
         mesh.RecalculateBounds();
@@ -472,8 +511,9 @@ public class ImageImport :  MonoBehaviour
 
         for (int i = 0; i < uvs.Length; i++)
         {
-            Debug.Log($"vertices[i].x {vertices[i].x}, vertices[i].z {vertices[i].y}");
-            uvs[i] = new Vector2(vertices[i].x/pos.width, vertices[i].y/pos.height);
+            // Debug.Log($"vertices[i].x {vertices[i].x}, vertices[i].z {vertices[i].y}");
+            // unityとJSのcanvasではy座標の向きが違うため、変換する
+            uvs[i] = new Vector2((float)vertices[i].x/pos.width, pos.height - (float)vertices[i].y/pos.height);
         }
         mesh.uv = uvs;
 
@@ -481,58 +521,68 @@ public class ImageImport :  MonoBehaviour
         var bones = new List<Transform>();
         GetAllChildren(humanBones, bones);
 
+        var lowerArmL = bones.Find(transform => transform.name == "lowerArm.L");
+        var lowerArmLPos = lowerArmL.transform.localPosition;
+        Debug.Log($"lowerArmLPos x: {lowerArmLPos.x}, y: {lowerArmLPos.y}, z: {lowerArmLPos.z}");
+        lowerArmL.transform.localPosition = new Vector3(10, 0, 0);
+        var newLowerArmLPos = lowerArmL.transform.localPosition;
+        Debug.Log($"lowerArmLPos x: {newLowerArmLPos.x}, y: {newLowerArmLPos.y}, z: {newLowerArmLPos.z}");
+
+        var lowerArmLAng = lowerArmL.transform.localEulerAngles;
+        Debug.Log($"lowerArmLAng x: {lowerArmLAng.x}, y: {lowerArmLAng.y}, z: {lowerArmLAng.z}");
+        lowerArmL.transform.localEulerAngles = new Vector3(180, 0, 0);
+        var newLowerArmLAng = lowerArmL.transform.localEulerAngles;
+        Debug.Log($"newLowerArmLAng x: {newLowerArmLAng.x}, y: {newLowerArmLAng.y}, z: {newLowerArmLAng.z}");
+        
         // ボーン名の配列を作成
         // ウェイト作成でボーンを指定する際に、この配列のインデックスを使用する
         string[] boneNameIndex = bones.Select(bone => bone.name).ToArray();
-        int m = 0;
-        foreach(string name in boneNameIndex){
-            Debug.Log(m + " " + name);
-            m++;
-        }
-        // int i_bNV = 0;
-        
+
+        Debug.Log("boneIndex, boneName");
+        var boneId = 0;
+        foreach(var boneName in boneNameIndex){
+            Debug.Log($"{boneId}, {boneName}");
+            boneId ++;
+        };
+
         // Mesh作成に必要な情報（各頂点が関連するボーンの数(byte型)、ウェイト）を作成
         // bonesPerVertexは頂点の数と同じ、weighsは頂点数 x 関連するボーンの数の合計の長さ
-        // foreach(var boneNamesOnVertex in boneNamesOnVertices){
-        //     // foreach(var name in boneNamesOnVertex){
-        //     //     Debug.Log($"{i_bNV}: {name}");
-        //     // }
+        for(int vertex_i = 0; vertex_i < vertices.Length; vertex_i++ )
+        {
+            var boneIds = boneIdOnVertices[vertex_i];
+            // 1頂点に関連するボーンの数
+            int boneCount = boneIds.Length;
 
-        //     // 各頂点が関連するボーンの数を作成
-        //     // 各頂点（Key）が持つBoneNameリスト（Value）
-        //     var boneNames = boneNamesOnVertex.ToArray();
-        //     // BoneNameの数
-        //     int boneCount = boneNames;
+            // byte型で追加
+            bonesPerVertex.Add(Convert.ToByte(boneCount));
 
-        //     // BoneNameの数をbyte型で追加
-        //     bonesPerVertex.Add(Convert.ToByte(boneCount));
+            // 登録されているボーンの数だけウェイトを作成する
+            for(int bone_i = 0; bone_i < boneIds.Length; bone_i++){
+                var weight = new BoneWeight1();
 
-        //     // 登録されているボーンの数だけウェイトを作成する
-        //     foreach(var boneName in boneNames){
-        //         var weight = new BoneWeight1();
+                // ボーン（Humanoid Avatarが適応されるTransform群）のIndexを登録する
+                weight.boneIndex = boneIds[bone_i];
 
-        //         // ボーン（Humanoid Avatarが適応されるTransform群）のIndexを登録する
-        //         weight.boneIndex = Array.IndexOf(boneNameIndex, boneName);
+                // それぞのweightを登録する
+                // weight.weight = (float)Math.Round(boneWeightOnVertices[vertex_i][bone_i], 1);
+                weight.weight = (float)boneWeightOnVertices[vertex_i][bone_i];
 
-        //         // 一つの頂点に複数のボーン名が登録されている場合、ウェイトは等分とする
-        //         weight.weight = 1.0f / boneCount;
+                // ウェイトのリスト（weights）に追加する
+                weights.Add(weight);
+            }
+        }
+        Debug.Log("weights");
 
-        //         Debug.Log("boneIndex: " + weight.boneIndex + "boneName: " + boneName + ", weight: " + weight.weight);
-
-        //         // ウェイトのリスト（weights）に追加する
-        //         weights.Add(weight);
-        //     }
-
-        //     i_bNV ++;
-        // }
-
+        foreach(var weight in weights){
+            Debug.Log(weight.weight);
+        }
+        
         // 各頂点が関連するボーンの数(byte型)のリスト、ウェイトのリストをそれぞれNativeArray型に変換する
         var bonesPerVertexArray = new NativeArray<byte>(bonesPerVertex.ToArray(), Allocator.Temp);
         var weightsArray = new NativeArray<BoneWeight1>(weights.ToArray(), Allocator.Temp);
 
         // メッシュに各頂点が関連するボーンの数(byte型)、ウェイトを設定する
         mesh.SetBoneWeights(bonesPerVertexArray, weightsArray);
-
         // ボーントランスフォームとバインドポーズ(デフォルト位置)を作成する
         Matrix4x4[] bindPoses = new Matrix4x4[bones.Count];
         for(int pose_i = 0; pose_i < bindPoses.Length; pose_i ++){
@@ -547,6 +597,10 @@ public class ImageImport :  MonoBehaviour
 
         // メッシュをスキンメッシュレンダラーに登録
         rend.sharedMesh = mesh;
+
+        // 画像からテクスチャーを作成し、スキンメッシュレンダラーに登録
+        Texture2D texture = CreateTextureFromBytes(Convert.FromBase64String(obj.image));
+        rend.material.mainTexture = texture;
 
         // ルートボーンをスキンメッシュレンダラーに登録
         GameObject hips = humanBones.transform.Find("hips").gameObject;
@@ -596,7 +650,9 @@ public class MeshJson
 {
     public PointJson[] vertices;
     public int[] triangles;
-    public List<string[]> boneNamesOnVertices;
+    public List<int[]> boneIdOnVertices;
+    public List<float[]> boneWeightOnVertices;
+    public PointJson[] armature;
 }
 
 [Serializable]

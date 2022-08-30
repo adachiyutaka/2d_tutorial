@@ -28,7 +28,7 @@ public class Player : MonoBehaviour
     [Header("踏みつけ判定の高さの割合(%)")] public float stepOnRate = 10;
 
     // TODO:Animatorを設定
-    //private Animator anim = null;
+    private Animator anim = null;
     private Rigidbody2D rb = null;
 
     //  TODO:変数名を変更
@@ -60,7 +60,7 @@ public class Player : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        //anim = GetComponent<Animator>();
+        anim = GetComponent<Animator>();
         rb = GetComponent<Rigidbody2D>();
         polycol2d = GetComponent<PolygonCollider2D>();
         spriteRenderer = GetComponent<SpriteRenderer>();
@@ -109,14 +109,18 @@ public class Player : MonoBehaviour
         float xSpeed = 0.0f;
         if (horizontalKey > 0)
         {
-            transform.localScale = new Vector3(1, 1, 1);
+            if(transform.localScale.x < 0){
+                transform.localScale = new Vector3(-transform.localScale.x, transform.localScale.y, transform.localScale.z);
+            }
             isRun = true;
             dashTime += Time.deltaTime;
             xSpeed = speed;
         }
         else if (horizontalKey < 0)
         {
-            transform.localScale = new Vector3(-1, 1, 1);
+            if(transform.localScale.x > 0){
+                transform.localScale = new Vector3(-transform.localScale.x, transform.localScale.y, transform.localScale.z);
+            }
             isRun = true;
             dashTime += Time.deltaTime;
             xSpeed = -speed;
@@ -140,6 +144,9 @@ public class Player : MonoBehaviour
 
         beforeKey = horizontalKey;
         xSpeed *= dashCurve.Evaluate(dashTime);
+
+        SetAnimation();
+
         return xSpeed;
     }
     private float GetYSpeed()
@@ -264,12 +271,13 @@ public class Player : MonoBehaviour
 
     // private void SetAnimation()
     // {
-    //     anim.SetBool("jump", isJump);
-    //     anim.SetBool("ground", isGround);
-    //     anim.SetBool("run", isRun);
+
     // }
     private void SetAnimation()
     {
+        anim.SetBool("jump", isJump);
+        anim.SetBool("ground", isGround);
+        anim.SetBool("run", isRun);
         Vector3 localAngle = transform.localEulerAngles;
         if(isDown)
         {   
