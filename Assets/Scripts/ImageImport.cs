@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -86,8 +87,17 @@ public class ImageImport :  MonoBehaviour
                 {
                     Debug.Log($"triangle:{triangle}");
                 }
-                Debug.Log($"boneNames-------------");
 
+                int armatureId = 0;
+                foreach(var points in meshData.armature)
+                {
+                    if(points != null){
+                        Debug.Log($"armature {armatureId}:{points.x}, {points.y}");
+                    }else{
+                        Debug.Log($"armature {armatureId}: null");
+                    }
+                    armatureId ++;
+                }
 
                 foreach(var boneIds in meshData.boneIdOnVertices)
                 {
@@ -163,7 +173,6 @@ public class ImageImport :  MonoBehaviour
                     SkinnedMeshRenderer rend = player.GetComponent<SkinnedMeshRenderer>();
 
                     CreateHumanMesh(rend, genericMan, obj, pos);
-
                     // AssetDatabase.CreateAsset (rend.material.mainTexture, "Assets/testTexture.asset");
                     // AssetDatabase.CreateAsset (rend.sharedMesh, "Assets/testMesh.asset");
                     // PrefabUtility.CreatePrefab ("Assets/testPlayer.prefab", player);
@@ -321,18 +330,20 @@ public class ImageImport :  MonoBehaviour
         return ret;
     }
 
-    private void CreateHumanMesh(SkinnedMeshRenderer rend, GameObject humanBones, ObjectJson obj, PositionJson pos){
+    private void CreateHumanMesh(SkinnedMeshRenderer rend, GameObject transforms, ObjectJson obj, PositionJson pos){
         var mesh = new Mesh();
         var bonesPerVertex = new List<byte>();
         var weights = new List<BoneWeight1>();
         int size = 15;
         var meshData = obj.meshData;
-        // var armature = meshData.armature;
+        var armature = meshData.armature;
         var boneIdOnVertices = meshData.boneIdOnVertices;
         var boneWeightOnVertices = meshData.boneWeightOnVertices;
         var triangles = meshData.triangles;
         var vertices = meshData.vertices;
 
+        transforms = transforms.transform.GetChild(0).gameObject;
+        
         // // Mesh作成に必要な情報（頂点、三角形の順番、座標とボーン名の対応）を作成
         // var vertices = new List<Vector3>();
         // var triangles = new List<int>();
@@ -517,26 +528,37 @@ public class ImageImport :  MonoBehaviour
         }
         mesh.uv = uvs;
 
+        Texture2D texture = CreateTextureFromBytes(Convert.FromBase64String(obj.image));
+
         // ボーン（Humanoid Avatarが適応されるTransform群）の全階層のtransformを配列にコピーする
-        var bones = new List<Transform>();
-        GetAllChildren(humanBones, bones);
+        var transformList = new List<Transform>();
+        GetAllChildren(transforms, transformList);
+        Debug.Log($"transformList.Count {transformList.Count}");
+        foreach(var transform in transformList){
+            Debug.Log($"transformList name {transform.name}");
+        }
+        Debug.Log("old transform -----------------");
+        CheckTransform(transforms);
+        MakeArmature(transforms, transformList, armature, texture.height);
+        Debug.Log("new transform -----------------");
+        CheckTransform(transforms);
 
-        var lowerArmL = bones.Find(transform => transform.name == "lowerArm.L");
-        var lowerArmLPos = lowerArmL.transform.localPosition;
-        Debug.Log($"lowerArmLPos x: {lowerArmLPos.x}, y: {lowerArmLPos.y}, z: {lowerArmLPos.z}");
-        lowerArmL.transform.localPosition = new Vector3(10, 0, 0);
-        var newLowerArmLPos = lowerArmL.transform.localPosition;
-        Debug.Log($"lowerArmLPos x: {newLowerArmLPos.x}, y: {newLowerArmLPos.y}, z: {newLowerArmLPos.z}");
+        // var lowerArmL = transformList.Find(transform => transform.name == "lowerArm.L");
+        // var lowerArmLPos = lowerArmL.transform.localPosition;
+        // Debug.Log($"lowerArmLPos x: {lowerArmLPos.x}, y: {lowerArmLPos.y}, z: {lowerArmLPos.z}");
+        // lowerArmL.transform.localPosition = new Vector3(10, 0, 0);
+        // var newLowerArmLPos = lowerArmL.transform.localPosition;
+        // Debug.Log($"lowerArmLPos x: {newLowerArmLPos.x}, y: {newLowerArmLPos.y}, z: {newLowerArmLPos.z}");
 
-        var lowerArmLAng = lowerArmL.transform.localEulerAngles;
-        Debug.Log($"lowerArmLAng x: {lowerArmLAng.x}, y: {lowerArmLAng.y}, z: {lowerArmLAng.z}");
-        lowerArmL.transform.localEulerAngles = new Vector3(180, 0, 0);
-        var newLowerArmLAng = lowerArmL.transform.localEulerAngles;
-        Debug.Log($"newLowerArmLAng x: {newLowerArmLAng.x}, y: {newLowerArmLAng.y}, z: {newLowerArmLAng.z}");
+        // var lowerArmLAng = lowerArmL.transform.localEulerAngles;
+        // Debug.Log($"lowerArmLAng x: {lowerArmLAng.x}, y: {lowerArmLAng.y}, z: {lowerArmLAng.z}");
+        // lowerArmL.transform.localEulerAngles = new Vector3(180, 0, 0);
+        // var newLowerArmLAng = lowerArmL.transform.localEulerAngles;
+        // Debug.Log($"newLowerArmLAng x: {newLowerArmLAng.x}, y: {newLowerArmLAng.y}, z: {newLowerArmLAng.z}");
         
         // ボーン名の配列を作成
         // ウェイト作成でボーンを指定する際に、この配列のインデックスを使用する
-        string[] boneNameIndex = bones.Select(bone => bone.name).ToArray();
+        string[] boneNameIndex = transformList.Select(bone => bone.name).ToArray();
 
         Debug.Log("boneIndex, boneName");
         var boneId = 0;
@@ -584,40 +606,166 @@ public class ImageImport :  MonoBehaviour
         // メッシュに各頂点が関連するボーンの数(byte型)、ウェイトを設定する
         mesh.SetBoneWeights(bonesPerVertexArray, weightsArray);
         // ボーントランスフォームとバインドポーズ(デフォルト位置)を作成する
-        Matrix4x4[] bindPoses = new Matrix4x4[bones.Count];
+        Matrix4x4[] bindPoses = new Matrix4x4[transformList.Count];
         for(int pose_i = 0; pose_i < bindPoses.Length; pose_i ++){
-            bindPoses[pose_i] = bones[pose_i].worldToLocalMatrix * transform.localToWorldMatrix;
+            bindPoses[pose_i] = transformList[pose_i].worldToLocalMatrix * transform.localToWorldMatrix;
         }
 
         // bindPoses 配列を、メッシュの bindposes 配列に割り当て、デフォルトポーズをバインドする
         mesh.bindposes = bindPoses;
 
         // ボーンのリストを配列に変換し、スキンメッシュレンダラーに登録
-        rend.bones = bones.ToArray();
+        rend.bones = transformList.ToArray();
 
         // メッシュをスキンメッシュレンダラーに登録
         rend.sharedMesh = mesh;
 
         // 画像からテクスチャーを作成し、スキンメッシュレンダラーに登録
-        Texture2D texture = CreateTextureFromBytes(Convert.FromBase64String(obj.image));
         rend.material.mainTexture = texture;
 
         // ルートボーンをスキンメッシュレンダラーに登録
-        GameObject hips = humanBones.transform.Find("hips").gameObject;
-        rend.rootBone = hips.transform;
+        // GameObject hips = transforms.transform.Find("hips").gameObject;
+        // rend.rootBone = hips.transform;
+        rend.rootBone = transforms.transform;
     }
 
-    static void GetAllChildren(GameObject parent, List<Transform> bones) {
-        Transform children = parent.GetComponentInChildren<Transform>();
+
+    static void GetAllChildren(GameObject parent, List<Transform> transformList) {
+        transformList.Add(parent.transform);
         //子要素がいなければ終了
-        if (children.childCount == 0) {
-            return;
-        }
-        foreach(Transform child in children) {
-            bones.Add(child);
-            GetAllChildren(child.gameObject, bones);
+        int childCount = parent.transform.childCount;
+        if (childCount > 0) {
+            for(int i = 0; i < childCount; i++){
+                GetAllChildren(parent.transform.GetChild(i).gameObject, transformList);
+            }
         }
     }
+
+// (parent, transformList, armature){
+
+// 子があるかどうかを調べる
+
+
+// 子がある場合
+// 	全ての子について処理する
+// 		子のlocalPosを決定する
+// 		一つの子のartmatureの位置を調べる
+// 		parentとの距離を求め、子のlocalPosYに設定する
+// 		（nullの場合、距離を0とする）
+// 		子を親として再起処理を行う
+
+// 親の角度を決める
+// 子の中で（L, R）がついていないものがある場合、角度はそれに従う
+// 子の中にarmatureに登録されているものがない場合、角度の変更はなし（0,0,0）
+
+// }
+
+    static void MakeArmature(GameObject parent, List<Transform> transformList, PointJson[] armature, int height) {
+        //子要素がある場合
+        // Debug.Log($"MakeArmature {parent.name}");
+        int childCount = parent.transform.childCount;
+        if (childCount > 0) {
+            var parentPos = armature[FindBonePosition(parent.name)];
+            Transform centerChild = parent.transform.GetChild(0);
+            for(int i = 0; i < childCount; i++){
+                Transform child = parent.transform.GetChild(i);
+                // Debug.Log($"child {i}:{child.name}");
+
+                // 子の名前でL, Rがついていないもの（hip〜head.end）かどうかを判定
+                if(!Regex.IsMatch(child.name, ".L|.R")){
+                    centerChild = child;
+                }
+
+                // 子の相対位置を算出する
+                float distance;
+                var childId = FindBonePosition(child.name);
+                var childPos = armature[childId];
+                if(childPos != null){
+                    // Debug.Log($"childPos :{childPos.x}, {childPos.y}");
+                    distance = (float)Math.Sqrt(Math.Pow(parentPos.x - childPos.x, 2) + Math.Pow(parentPos.y - childPos.y, 2));
+                }
+                else{
+                    childPos = new PointJson();
+                    childPos.x = parentPos.x;
+                    childPos.y = parentPos.y;
+                    armature[childId] = childPos;
+                    distance = 0;
+                }
+                child.transform.localPosition = new Vector3(0, distance, 0);
+                MakeArmature(child.gameObject, transformList, armature, height);
+            }
+
+            // 親の角度を算出する
+            // 子の名前でL, Rがついていないもの（hip〜head.end）があった場合、その子に向かう角度を設定する
+            // 親から子へのベクトルを取得
+            Quaternion rotation = Quaternion.Euler(0f, 0f, 0f);
+            var centerChildPos = armature[FindBonePosition(centerChild.name)];
+
+            Debug.Log($"{parent.name} Pos parent:{parentPos.x}, {parentPos.y}, child:{centerChildPos.x}, {centerChildPos.y}");
+            Debug.Log($"{parent.name} parent.transform.localRotation old rot: {parent.transform.localRotation.eulerAngles.x}, {parent.transform.localRotation.eulerAngles.y}, {parent.transform.localRotation.eulerAngles.z}");
+
+            if(parent.name == "hips"){
+                Quaternion hipsRotation = Quaternion.Euler(90f, 0f, 0f);
+                parent.transform.localRotation = hipsRotation;
+            }
+            else if(centerChildPos.x == parentPos.x && centerChildPos.y == parentPos.y) {
+                parent.transform.localRotation = rotation;
+                Debug.Log("Quaternion.Euler(0f, 0f, 0f)");
+            }else{
+                // Vector3 relativePos = new Vector3(centerChildPos.x, centerChildPos.y, 0) - new Vector3(parentPos.x, parentPos.y, 0);
+                Vector3 relativePos = new Vector3(centerChildPos.x, height - centerChildPos.y, 0) - new Vector3(parentPos.x, height - parentPos.y, 0);
+                // ベクトルを回転情報に変換
+                rotation = Quaternion.LookRotation (relativePos);
+                // LookRotationではZ軸+が正面となるので、Y軸+が正面になるように回転する
+                Debug.Log($"{parent.name} rotation rot: {rotation.eulerAngles.x}, {rotation.eulerAngles.y}, {rotation.eulerAngles.z}");
+                rotation = rotation * Quaternion.Euler(90f, 0f, 0f);
+                Debug.Log($"{parent.name} rotation * Quaternion.Euler(90f, 0f, 0f) rot: {rotation.eulerAngles.x}, {rotation.eulerAngles.y}, {rotation.eulerAngles.z}");
+                Debug.Log("Quaternion.LookRotation (relativePos)");
+                parent.transform.rotation = rotation;
+            }
+            Debug.Log($"{parent.name} to {centerChild.name} rot: {rotation.eulerAngles.x}, {rotation.eulerAngles.y}, {rotation.eulerAngles.z}");
+            Debug.Log($"{parent.name} rot: {parent.transform.rotation.eulerAngles.x}, {parent.transform.rotation.eulerAngles.y}, {parent.transform.rotation.eulerAngles.z}");
+            
+        }
+
+        // ボーン名からarmatureの座標を返すローカル関数
+        int FindBonePosition(string boneName) {
+            var id = transformList.FindIndex(transform => transform.name == boneName);
+            return id;
+            // return armature[transformList.FindIndex(transform => transform.name == boneName)];
+        }
+    }
+
+    static void CheckTransform(GameObject parent) {
+        //子要素がある場合
+        int childCount = parent.transform.childCount;
+        if (childCount > 0) {
+            for(int i = 0; i < childCount; i++){
+                Transform child = parent.transform.GetChild(i);
+                var pos = child.position;
+                var rot = child.rotation;
+                Debug.Log($"name: {child.name}| pos:{pos.x},{pos.y},{pos.z} | rot:{rot.x},{rot.y},{rot.z}");
+                CheckTransform(child.gameObject);
+            }
+        }
+    }
+
+    // static var CheckArmature(GameObject parent, List<Transform> transformList, var armature) {
+    //     int parentId = transformList.FindIndex(transform => transform.name == parent.name);
+    //     var bonePosition = armature[parentId];
+    //     // armatureに該当するボーンの座標がない場合
+    //     if (bonePosition == null) {
+    //         // 子要素についても調べる
+    //         Transform children = parent.GetComponentInChildren<Transform>();
+    //         // 子要素があった場合
+    //         if(children.childCount > 0){
+    //             foreach(Transform child in children) {
+    //                 bonePosition = CheckArmature(child.gameObject, transformList, armature);
+    //             }
+    //         }
+    //     }
+    //     return bonePosition;
+    // }
 }
 
 [Serializable]

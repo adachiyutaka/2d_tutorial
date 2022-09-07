@@ -13,7 +13,7 @@ ModelImporter:
     legacyGenerateAnimations: 4
     bakeSimulation: 0
     resampleCurves: 1
-    optimizeGameObjects: 1
+    optimizeGameObjects: 0
     motionNodeName: 
     rigImportErrors: 
     rigImportWarnings: 
@@ -324,7 +324,7 @@ ModelImporter:
     - name: Hip.L
       parentName: Hips
       position: {x: -0, y: 0, z: 0}
-      rotation: {x: -0.42861506, y: 0.5623958, z: 0.42861497, w: 0.56239593}
+      rotation: {x: -0.4286151, y: 0.5623959, z: 0.428615, w: 0.562396}
       scale: {x: 1.0000004, y: 1.0000001, z: 1}
     - name: UpperLeg.L
       parentName: Hip.L
@@ -349,7 +349,7 @@ ModelImporter:
     - name: Hip.R
       parentName: Hips
       position: {x: -0, y: 0, z: 0}
-      rotation: {x: -0.42861506, y: -0.5623958, z: -0.42861497, w: 0.56239593}
+      rotation: {x: -0.4286151, y: -0.5623959, z: -0.428615, w: 0.562396}
       scale: {x: 1.0000004, y: 1.0000001, z: 1}
     - name: UpperLeg.R
       parentName: Hip.R
