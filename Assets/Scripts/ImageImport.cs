@@ -190,12 +190,13 @@ public class ImageImport :  MonoBehaviour
                     player.transform.localScale = new Vector3(0.01f, 0.01f, 0.01f);
                     capsuleCollider2D.direction = CapsuleDirection2D.Vertical;
                     capsuleCollider2D.size = new Vector2(pos.width/2, pos.height);
+                    capsuleCollider2D.offset = new Vector2(0, capsuleCollider2D.offset.y);
                     Debug.Log($"pos.height {pos.height}, pos.width {pos.width}, capsuleCollider2D.size {capsuleCollider2D.size}");
                     // 足元と頭の接地判定を設定
                     //  相対位置を指定、pixel単位のheightをそのまま使うと大きすぎるので、100分の一にする
                     Vector3 playerPos = player.transform.position;
-                    Vector3 groundPos = new Vector3((float)pos.width/200, 0, 0);
-                    Vector3 headPos = new Vector3((float)pos.width/200, (float)pos.height/100, 0);
+                    Vector3 groundPos = new Vector3(0, 0, 0);
+                    Vector3 headPos = new Vector3(0, (float)pos.height/100, 0);
 
                     // Vector3 groundPos = new Vector3(playerPos.x, playerPos.y - (float)pos.height/200, playerPos.z);
                     // Vector3 headPos = new Vector3(playerPos.x, playerPos.y + (float)pos.height/200, playerPos.z);
